@@ -21,10 +21,13 @@ const valueFormatter = (number: number) => `€ ${Intl.NumberFormat('fr').format
 
 import { useState, useEffect } from 'react';
 import { getBankAccountsAction } from '@/app/actions/accounts';
+import { syncTransactionsAction } from '@/app/actions/bank';
 
 export default function DashboardPage() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     getBankAccountsAction().then(data => {
@@ -33,6 +36,21 @@ export default function DashboardPage() {
     });
   }, []);
 
+  const handleSync = async () => {
+    setSyncing(true);
+    setMessage('Synchronisation en cours...');
+    const res = await syncTransactionsAction();
+    setSyncing(false);
+    if (res.error) {
+      setMessage(`Erreur: ${res.error}`);
+    } else {
+      setMessage(`${res.count} transactions importées !`);
+      // Rafraîchir les comptes (soldes)
+      getBankAccountsAction().then(setBankAccounts);
+    }
+    setTimeout(() => setMessage(''), 5000);
+  };
+
   return (
     <div className="space-y-8">
       {/* Header section with KPIs */}
@@ -40,14 +58,24 @@ export default function DashboardPage() {
         <div>
           <Title className="text-3xl font-bold text-white">Bonjour Denis 👋</Title>
           <Text className="text-slate-400">Voici l'état de votre architecture budgétaire.</Text>
+          {message && <Text className="text-indigo-400 mt-2 font-medium">{message}</Text>}
         </div>
-        <button 
-          onClick={() => window.location.href = '/settings'}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-semibold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
-        >
-          <RefreshCcw size={18} />
-          Gérer mes comptes
-        </button>
+        <div className="flex gap-3">
+          <button 
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white px-6 py-3 rounded-2xl font-semibold transition-all shadow-lg active:scale-95"
+          >
+            <RefreshCcw size={18} className={syncing ? 'animate-spin' : ''} />
+            {syncing ? 'Importation...' : 'Actualiser mes banques'}
+          </button>
+          <button 
+            onClick={() => window.location.href = '/settings'}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-semibold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+          >
+            Gérer mes comptes
+          </button>
+        </div>
       </div>
 
       {bankAccounts.length > 0 && (

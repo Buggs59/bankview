@@ -99,3 +99,28 @@ export async function createSession(code: string) {
 
   return response.json();
 }
+
+export async function getAccountTransactions(accountUid: string, dateFrom?: string) {
+  const token = await getEnableBankingToken();
+  
+  let url = `${ENABLE_BANKING_API_URL}/accounts/${accountUid}/transactions`;
+  if (dateFrom) {
+    url += `?date_from=${dateFrom}`;
+  }
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`ENABLE BANKING TRANSACTIONS ERROR (${accountUid}):`, errorText);
+    throw new Error(`Failed to fetch transactions: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.transactions || [];
+}

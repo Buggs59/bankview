@@ -1,7 +1,71 @@
 'use server';
 
 import { redirect } from 'next/navigation';
-import { startAuthorization, getAvailableBanks, createSession } from '@/lib/enableBanking';
+
+import { startAuthorization, getAvailableBanks, createSession, getAccountTransactions } from '@/lib/enableBanking';
+
+export async function syncTransactionsAction() {
+  try {
+    const supabase = await createClient();
+    
+    // 1. Récupérer l'utilisateur
+    let { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user || null;
+    }
+    if (!user) throw new Error("Utilisateur non connecté");
+
+    // 2. Récupérer tous les comptes bancaires liés à cet utilisateur
+    const { data: accounts, error: accError } = await supabase
+      .from('bank_accounts')
+      .select('*, bank_connections!inner(user_id)')
+      .eq('bank_connections.user_id', user.id);
+
+    if (accError) throw new Error(`Erreur récupération comptes: ${accError.message}`);
+    if (!accounts || accounts.length === 0) return { success: true, count: 0, message: "Aucun compte lié trouvé." };
+
+    let totalImported = 0;
+    const dateFrom = "2024-01-01"; // On remonte très loin pour récupérer le maximum
+
+    // 3. Pour chaque compte, synchroniser les transactions
+    for (const acc of accounts) {
+      try {
+        const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom);
+        
+        if (rawTransactions.length > 0) {
+          const transactionsToInsert = rawTransactions.map((tx: any) => ({
+            user_id: user.id,
+            amount: parseFloat(tx.amount.value),
+            label: tx.description || tx.reference || 'Transaction sans libellé',
+            date_real: tx.booking_date || tx.value_date,
+            bank_id: tx.transaction_id || tx.entry_reference, // Identifiant unique pour onConflict
+            accounting_period: (tx.booking_date || tx.value_date).substring(0, 7), // Format YYYY-MM
+            updated_at: new Date().toISOString()
+          }));
+
+          const { error: txError } = await supabase
+            .from('transactions')
+            .upsert(transactionsToInsert, { onConflict: 'bank_id' });
+
+          if (txError) {
+            console.error(`Erreur insertion transactions pour compte ${acc.id}:`, txError);
+          } else {
+            totalImported += transactionsToInsert.length;
+          }
+        }
+      } catch (err) {
+        console.error(`Erreur sync compte ${acc.id}:`, err);
+      }
+    }
+
+    return { success: true, count: totalImported };
+  } catch (error: any) {
+    console.error('ERREUR SYNC GLOBALE:', error);
+    return { error: error.message || 'Erreur lors de la synchronisation des transactions' };
+  }
+}
+
 import { createClient } from '@/utils/supabase/server';
 
 export async function connectBankAction(siteUrl?: string) {
