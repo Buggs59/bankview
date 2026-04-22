@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import { startAuthorization, getAvailableBanks, createSession } from '@/lib/enableBanking';
-// L'insertion en bdd nécessitera une implémentation auth côté serveur à l'avenir
+import { createClient } from '@/utils/supabase/server';
 
 export async function connectBankAction(siteUrl?: string) {
   // === DEBUG ASPSP ===
