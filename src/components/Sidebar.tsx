@@ -5,11 +5,14 @@ import {
   Settings, 
   ArrowLeftRight, 
   Menu,
-  X 
+  X,
+  LogOut 
 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
+import { signout } from '@/app/auth/actions';
+
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -73,10 +76,21 @@ export default function Sidebar() {
           })}
         </nav>
 
-        <div className="mt-auto p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
-          <p className="text-xs text-slate-500 mb-1 font-medium italic">Connected as</p>
-          <p className="text-sm text-slate-300 truncate">Denis (Administrator)</p>
+        <div className="mt-auto space-y-4">
+          <div className="p-4 bg-slate-900/50 rounded-2xl border border-slate-800">
+            <p className="text-xs text-slate-500 mb-1 font-medium italic">Connected as</p>
+            <p className="text-sm text-slate-300 truncate font-semibold">Administrator</p>
+          </div>
+          
+          <button
+            onClick={() => signout()}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-400/5 transition-all group"
+          >
+            <LogOut size={20} className="group-hover:rotate-180 transition-transform duration-500" />
+            Déconnexion
+          </button>
         </div>
+
       </div>
     </>
   );
