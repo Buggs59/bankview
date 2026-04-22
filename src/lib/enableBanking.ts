@@ -30,7 +30,7 @@ export async function getEnableBankingToken() {
   return jwt;
 }
 
-export async function startAuthorization(bankId: string, redirectUrl: string, country: string = 'FR') {
+export async function startAuthorization(bankId: string, redirectUrl: string, state: string, country: string = 'FR') {
   const token = await getEnableBankingToken();
   
   const response = await fetch(`${ENABLE_BANKING_API_URL}/auth`, {
@@ -48,7 +48,7 @@ export async function startAuthorization(bankId: string, redirectUrl: string, co
         country: country,
       },
       redirect_url: redirectUrl,
-      state: 'some_unique_state',
+      state: state,
     }),
   });
 

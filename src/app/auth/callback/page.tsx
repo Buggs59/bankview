@@ -1,106 +1,90 @@
-'use client';
-
 import { Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
 import { Card, Title, Text, Button } from '@tremor/react';
 import { CheckCircle2, XCircle, Loader2 } from 'lucide-react';
+import Link from 'next/link';
 
-import { useState, useEffect } from 'react';
 import { finalizeBankConnectionAction } from '@/app/actions/bank';
 
-function CallbackContent() {
-  const searchParams = useSearchParams();
-  const code = searchParams.get('code');
-  const errorParam = searchParams.get('error');
+export const dynamic = 'force-dynamic';
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+async function CallbackResult({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const params = await searchParams;
+  const code = params.code as string | undefined;
+  const errorParam = params.error as string | undefined;
 
-  useEffect(() => {
-    if (errorParam) {
-      setStatus('error');
-      setErrorDetails(errorParam);
-      return;
-    }
-
-    if (!code) {
-      setStatus('error');
-      setErrorDetails('Aucun code retourné par la banque');
-      return;
-    }
-
-    finalizeBankConnectionAction(code)
-      .then((res) => {
-        if (res.success) {
-          setSessionId(res.sessionId);
-          setStatus('success');
-        } else if (res.error) {
-          setStatus('error');
-          setErrorDetails(res.error);
-        }
-      })
-      .catch((err) => {
-        console.error(err);
-        setStatus('error');
-        setErrorDetails(err.message || 'Erreur inconnue');
-      });
-  }, [code, errorParam]);
-
-  if (status === 'loading') {
-    return (
-      <Card className="bg-slate-900 border-indigo-500/50 ring-0 text-center py-12">
-        <Loader2 className="animate-spin text-indigo-500 mx-auto mb-4" size={48} />
-        <Title className="text-white">Validation en cours...</Title>
-        <Text className="text-slate-400 mt-2">Nous sécurisons votre connexion avec la banque.</Text>
-      </Card>
-    );
+  if (errorParam) {
+    return <ErrorCard message={`Erreur banque : ${errorParam}`} />;
   }
 
-  if (status === 'error') {
-    return (
-      <Card className="bg-slate-900 border-rose-500/50 ring-0 text-center py-12">
-        <XCircle className="text-rose-500 mx-auto mb-4" size={48} />
-        <Title className="text-white">Erreur de connexion</Title>
-        <Text className="text-slate-400 mt-2">Nous n'avons pas pu valider votre compte bancaire.</Text>
-        {errorDetails && (
-          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
-            <Text className="text-rose-400 text-xs font-mono break-all">{errorDetails}</Text>
-          </div>
-        )}
-        <Button className="mt-6 bg-slate-800 border-none hover:bg-slate-700" onClick={() => window.location.href = '/settings'}>
-          Retour aux paramètres
-        </Button>
-      </Card>
-    );
+  if (!code) {
+    return <ErrorCard message="Aucun code de session retourné par la banque." />;
+  }
+
+  // On appelle directement l'action serveur depuis le composant serveur
+  const res = await finalizeBankConnectionAction(code);
+
+  if (res.error) {
+    return <ErrorCard message={res.error} />;
   }
 
   return (
     <Card className="bg-slate-900 border-emerald-500/50 ring-0 text-center py-12">
       <CheckCircle2 className="text-emerald-500 mx-auto mb-4" size={48} />
-      <Title className="text-white">Connexion réussie !</Title>
-      <Text className="text-slate-400 mt-2">Votre compte BBVA est désormais lié à DBA.</Text>
-      {sessionId && <Text className="text-slate-500 text-sm mt-1">Session: {sessionId.substring(0, 8)}...</Text>}
-      <Button className="mt-6 bg-indigo-600 border-none hover:bg-indigo-500" onClick={() => window.location.href = '/settings'}>
-        Retour aux paramètres
-      </Button>
+      <Title className="text-white text-2xl">Connexion réussie !</Title>
+      <Text className="text-slate-400 mt-2">Votre compte bancaire est désormais lié avec succès.</Text>
+      {res.sessionId && (
+        <Text className="text-slate-500 text-sm mt-4 font-mono">
+          ID Session : {res.sessionId.substring(0, 8)}...
+        </Text>
+      )}
+      <div className="mt-8">
+        <Link href="/settings">
+          <Button className="bg-indigo-600 border-none hover:bg-indigo-500 px-8 py-2 text-white rounded-lg transition-all">
+            Retour aux paramètres
+          </Button>
+        </Link>
+      </div>
     </Card>
   );
 }
 
-export default function AuthCallbackPage() {
+function ErrorCard({ message }: { message: string }) {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+    <Card className="bg-slate-900 border-rose-500/50 ring-0 text-center py-12">
+      <XCircle className="text-rose-500 mx-auto mb-4" size={48} />
+      <Title className="text-white text-2xl">Erreur de connexion</Title>
+      <Text className="text-slate-400 mt-2">Nous n'avons pas pu valider votre lien bancaire.</Text>
+      <div className="mt-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+        <Text className="text-rose-400 text-sm font-mono break-all">{message}</Text>
+      </div>
+      <div className="mt-8">
+        <Link href="/settings">
+          <Button className="bg-slate-800 border-none hover:bg-slate-700 px-8 py-2 text-white rounded-lg transition-all">
+            Réessayer depuis les paramètres
+          </Button>
+        </Link>
+      </div>
+    </Card>
+  );
+}
+
+export default function AuthCallbackPage({ 
+  searchParams 
+}: { 
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }> 
+}) {
+  return (
+    <main className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
       <div className="max-w-md w-full">
         <Suspense fallback={
           <div className="text-center py-12">
             <Loader2 className="animate-spin text-indigo-500 mx-auto mb-4" size={48} />
-            <Text className="text-slate-400">Finalisation de la connexion...</Text>
+            <Text className="text-slate-400">Finalisation de la connexion en cours...</Text>
           </div>
         }>
-          <CallbackContent />
+          <CallbackResult searchParams={searchParams} />
         </Suspense>
       </div>
-    </div>
+    </main>
   );
 }

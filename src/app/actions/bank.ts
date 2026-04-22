@@ -15,6 +15,13 @@ export async function connectBankAction(siteUrl?: string) {
   }
   // ===================
 
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) {
+    return { error: 'Vous devez être connecté pour lier un compte bancaire.' };
+  }
+
   const bankConnectorId = 'BBVA'; 
   const headersList = await import('next/headers').then(h => h.headers());
   const host = (await headersList).get('host');
@@ -27,9 +34,8 @@ export async function connectBankAction(siteUrl?: string) {
   const redirectUrl = `${baseUrl}/auth/callback`;
 
   try {
-    // A NOTER : Pour tester le flux de A à Z avec la Sandbox BBVA,
-    // il faut utiliser les credentials de test fournis par le portail Enable Banking.
-    const session = await startAuthorization(bankConnectorId, redirectUrl, 'FR');
+    // On passe l'ID de l'utilisateur dans le 'state' pour le récupérer au callback
+    const session = await startAuthorization(bankConnectorId, redirectUrl, user.id, 'FR');
     if (session.url) {
       return { url: session.url };
     } else {
