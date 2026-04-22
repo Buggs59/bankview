@@ -71,11 +71,13 @@ import { createClient } from '@/utils/supabase/server';
 export async function searchBanksAction(query: string = '') {
   try {
     const banks = await getAvailableBanks();
-    // Filtrer par France et par le nom recherché
-    return banks.filter((b: any) => 
-      b.country === 'FR' && 
-      b.name.toLowerCase().includes(query.toLowerCase())
-    ).slice(0, 10); // On limite à 10 résultats pour l'UI
+    const normalizedQuery = query.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+    // Filtrer par France et par le nom recherché sans accents
+    return banks.filter((b: any) => {
+      const normalizedName = b.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+      return b.country === 'FR' && normalizedName.includes(normalizedQuery);
+    }).slice(0, 10);
   } catch (e) {
     console.error("Erreur recherche banques", e);
     return [];
