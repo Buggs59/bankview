@@ -16,10 +16,19 @@ export async function connectBankAction(siteUrl?: string) {
   // ===================
 
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  
+  // DOUBLE FILET: getUser() est le standard, mais getSession() est parfois requis
+  // lors des actions serveur sur Vercel pour capter les cookies en cours de refresh.
+  let { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
-    return { error: 'Vous devez être connecté pour lier un compte bancaire.' };
+    const { data: { session } } = await supabase.auth.getSession();
+    user = session?.user || null;
+  }
+  
+  if (!user) {
+    console.error("ERREUR SESSION ACTION : Aucun utilisateur trouvé après getUser et getSession");
+    return { error: 'Session perdue. Veuillez vous reconnecter puis rafraîchir la page (Touche F5).' };
   }
 
   const bankConnectorId = 'BBVA'; 
