@@ -42,7 +42,7 @@ export async function finalizeBankConnectionAction(code: string) {
     const sessionId = sessionData.session_id;
     const accounts = sessionData.accounts || [];
 
-    const supabase = createClient();
+    const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
     if (!user) {
