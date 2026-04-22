@@ -53,8 +53,15 @@ export async function startAuthorization(bankId: string, redirectUrl: string, co
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Failed to start authorization: ${JSON.stringify(error)}`);
+    const errorText = await response.text();
+    console.error('ENABLE BANKING ERROR BODY:', errorText);
+    let errorDetail;
+    try {
+      errorDetail = JSON.parse(errorText);
+    } catch {
+      errorDetail = errorText;
+    }
+    throw new Error(`Failed to start authorization: ${JSON.stringify(errorDetail)}`);
   }
 
   return response.json();
@@ -85,8 +92,9 @@ export async function createSession(code: string) {
   });
 
   if (!response.ok) {
-    const error = await response.json();
-    throw new Error(`Failed to create session: ${JSON.stringify(error)}`);
+    const errorText = await response.text();
+    console.error('ENABLE BANKING SESSION ERROR:', errorText);
+    throw new Error(`Failed to create session: ${errorText}`);
   }
 
   return response.json();

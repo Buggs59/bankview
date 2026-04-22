@@ -15,10 +15,14 @@ export async function connectBankAction(siteUrl?: string) {
   }
   // ===================
 
-  // Si tilisy mock ASPSP est cassé, on essaye le sandbox de BBVA qui est dispo aussi
   const bankConnectorId = 'BBVA'; 
-  const baseUrl = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  // URL cible du retour après s'être identifié
+  
+  // Sur Vercel, on force le HTTPS
+  let baseUrl = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  if (process.env.VERCEL_URL && !baseUrl.startsWith('https')) {
+    baseUrl = `https://${process.env.VERCEL_URL}`;
+  }
+  
   const redirectUrl = `${baseUrl}/auth/callback`;
 
   try {
@@ -28,11 +32,11 @@ export async function connectBankAction(siteUrl?: string) {
     if (session.url) {
       return { url: session.url };
     } else {
-      throw new Error('No redirect URL returned from Enable Banking');
+      throw new Error('Pas d\'URL de redirection reçue de l\'API');
     }
-  } catch (error) {
-    console.error('Erreur lors de la connexion bancaire:', error);
-    throw error;
+  } catch (error: any) {
+    console.error('ERREUR AUTH BANQUE:', error);
+    throw new Error(`Détail technique : ${error.message || 'Erreur inconnue'}`);
   }
 }
 
