@@ -40,10 +40,46 @@ export async function finalizeBankConnectionAction(code: string) {
   try {
     const sessionData = await createSession(code);
     const sessionId = sessionData.session_id;
+    const accounts = sessionData.accounts || [];
 
-    // TODO: Enregistrer la sessionData.session_id dans la base de données Supabase
-    // Pour l'instant on retourne juste le succès pour ne pas casser votre flux
-    console.log("✅ Session Enable Banking récupérée avec succès :", sessionId);
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+
+    if (!user) {
+      throw new Error("Authentification utilisateur requise.");
+    }
+
+    // 1. Enregistrer ou mettre à jour la connexion principale
+    const { data: connection, error: connError } = await supabase
+      .from('bank_connections')
+      .upsert({
+        user_id: user.id,
+        session_id: sessionId,
+        bank_name: 'BBVA', // On pourrait extraire dynamiquement si dispo
+        updated_at: new Date().toISOString()
+      }, { onConflict: 'user_id' })
+      .select()
+      .single();
+
+    if (connError) throw new Error(`Erreur connexion: ${connError.message}`);
+
+    // 2. Enregistrer chaque compte retourné
+    if (accounts.length > 0) {
+      const accountsToInsert = accounts.map((acc: any) => ({
+        connection_id: connection.id,
+        bank_uid: acc.uid,
+        name: acc.name || acc.product || 'Compte Bancaire',
+        iban: acc.account_id?.iban || null,
+        currency: acc.currency || 'EUR',
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error: accError } = await supabase
+        .from('bank_accounts')
+        .upsert(accountsToInsert, { onConflict: 'bank_uid' });
+
+      if (accError) console.error('Erreur lors de l’enregistrement des comptes:', accError);
+    }
 
     return { success: true, sessionId };
   } catch (error) {

@@ -19,7 +19,20 @@ const mockDataEvolution = [
 
 const valueFormatter = (number: number) => `€ ${Intl.NumberFormat('fr').format(number).toString()}`;
 
+import { useState, useEffect } from 'react';
+import { getBankAccountsAction } from '@/app/actions/accounts';
+
 export default function DashboardPage() {
+  const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    getBankAccountsAction().then(data => {
+      setBankAccounts(data);
+      setLoading(false);
+    });
+  }, []);
+
   return (
     <div className="space-y-8">
       {/* Header section with KPIs */}
@@ -28,11 +41,28 @@ export default function DashboardPage() {
           <Title className="text-3xl font-bold text-white">Bonjour Denis 👋</Title>
           <Text className="text-slate-400">Voici l'état de votre architecture budgétaire.</Text>
         </div>
-        <button className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-semibold transition-all shadow-lg shadow-indigo-600/20 active:scale-95">
+        <button 
+          onClick={() => window.location.href = '/settings'}
+          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-6 py-3 rounded-2xl font-semibold transition-all shadow-lg shadow-indigo-600/20 active:scale-95"
+        >
           <RefreshCcw size={18} />
-          Synchroniser ma banque
+          Gérer mes comptes
         </button>
       </div>
+
+      {bankAccounts.length > 0 && (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {bankAccounts.map((acc) => (
+            <Card key={acc.id} className="bg-slate-900 border-slate-800 ring-0">
+              <Text className="text-slate-400 text-xs uppercase tracking-wider">{acc.name}</Text>
+              <Metric className="text-white text-xl mt-1">
+                {acc.currency === 'EUR' ? '€' : acc.currency} {acc.balance || '0.00'}
+              </Metric>
+              <Text className="text-slate-500 text-xs mt-2 truncate">{acc.iban || 'Compte sans IBAN'}</Text>
+            </Card>
+          ))}
+        </div>
+      )}
 
       <Grid numItemsLg={3} className="gap-6">
         <Card className="bg-slate-900 border-slate-800 ring-0 shadow-xl" decoration="top" decorationColor="emerald">
