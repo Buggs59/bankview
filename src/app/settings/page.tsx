@@ -1,20 +1,33 @@
 'use client';
 
-import { Card, Title, Text, Button, Flex, Badge, Divider } from '@tremor/react';
-import { CreditCard, Plus, Trash2, CheckCircle2, AlertCircle, Loader2 } from 'lucide-react';
-import { useState, useTransition } from 'react';
-import { connectBankAction } from '@/app/actions/bank';
+import { Card, Title, Text, Button, Flex, Badge, Divider, TextInput } from '@tremor/react';
+import { CreditCard, Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Search } from 'lucide-react';
+import { useState, useTransition, useEffect } from 'react';
+import { connectBankAction, searchBanksAction } from '@/app/actions/bank';
 
 export default function SettingsPage() {
   const [isPending, startTransition] = useTransition();
-  const [connections, setConnections] = useState([
-    // On simulera une connexion vide au début
-  ]);
+  const [connections, setConnections] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [availableBanks, setAvailableBanks] = useState<any[]>([]);
 
-  const handleConnect = () => {
+  // Recherche des banques en temps réel (Debounce de 400ms)
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery.length >= 2) {
+        searchBanksAction(searchQuery).then(setAvailableBanks);
+      } else {
+        setAvailableBanks([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
+  const handleConnect = (bankId: string) => {
     startTransition(async () => {
       try {
-        const response = await connectBankAction(window.location.origin);
+        const response = await connectBankAction(bankId);
         if (response?.error) {
           alert(`Erreur: ${response.error}`);
         } else if (response?.url) {
@@ -34,23 +47,46 @@ export default function SettingsPage() {
       </div>
 
       <div className="grid gap-8">
-        {/* Bank Connections Section */}
         <Card className="bg-slate-900 border-slate-800 ring-0">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
             <div>
-              <Title className="text-white">Comptes Bancaires</Title>
-              <Text className="text-slate-400">Connectez vos comptes via Enable Banking (Open Banking).</Text>
+              <Title className="text-white font-bold text-2xl">Ajouter une banque</Title>
+              <Text className="text-slate-400 mt-1">Recherchez votre banque (ex: Crédit Mutuel) pour la lier.</Text>
             </div>
-            <Button 
-              icon={isPending ? Loader2 : Plus} 
-              variant="primary" 
-              loading={isPending}
-              onClick={handleConnect}
-              className="bg-indigo-600 border-none hover:bg-indigo-500 rounded-xl"
-            >
-              Connecter ma banque
-            </Button>
+            <div className="relative w-full max-w-sm">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={18} />
+              <TextInput
+                placeholder="Rechercher une banque..."
+                className="pl-10 bg-slate-950 border-slate-800 text-white rounded-xl"
+                value={searchQuery}
+                onValueChange={setSearchQuery}
+              />
+            </div>
           </div>
+
+          {availableBanks.length > 0 && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10 pb-6 border-b border-slate-800">
+              {availableBanks.map((bank) => (
+                <button
+                  key={bank.name}
+                  disabled={isPending}
+                  onClick={() => handleConnect(bank.name)}
+                  className="flex items-center gap-4 p-4 bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-2xl transition-all text-left group disabled:opacity-50"
+                >
+                  <div className=\"w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-colors\">
+                    <CreditCard size={20} />
+                  </div>
+                  <div className="flex-1">
+                    <Text className="text-white font-semibold group-hover:text-indigo-200">{bank.name}</Text>
+                    <Text className="text-slate-500 text-xs uppercase tracking-tight">{bank.country}</Text>
+                  </div>
+                  <Plus size={18} className="text-slate-600 group-hover:text-indigo-400" />
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Title className="text-white mb-6 font-bold text-xl">Mes Connexions Actives</Title>
 
           <div className="space-y-4">
             {connections.length === 0 ? (

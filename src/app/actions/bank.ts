@@ -68,21 +68,23 @@ export async function syncTransactionsAction() {
 
 import { createClient } from '@/utils/supabase/server';
 
-export async function connectBankAction(siteUrl?: string) {
-  // === DEBUG ASPSP ===
+export async function searchBanksAction(query: string = '') {
   try {
     const banks = await getAvailableBanks();
-    console.log("=== API ENABLE BANKING : BANQUES EN FRANCE ===");
-    console.log(banks.filter((b: any) => b.country === 'FR').map((b: any) => b.name));
+    // Filtrer par France et par le nom recherché
+    return banks.filter((b: any) => 
+      b.country === 'FR' && 
+      b.name.toLowerCase().includes(query.toLowerCase())
+    ).slice(0, 10); // On limite à 10 résultats pour l'UI
   } catch (e) {
-    console.error("Erreur lister banques", e);
+    console.error("Erreur recherche banques", e);
+    return [];
   }
-  // ===================
+}
 
+export async function connectBankAction(bankConnectorId: string = 'BBVA') {
   const supabase = await createClient();
   
-  // DOUBLE FILET: getUser() est le standard, mais getSession() est parfois requis
-  // lors des actions serveur sur Vercel pour capter les cookies en cours de refresh.
   let { data: { user } } = await supabase.auth.getUser();
   
   if (!user) {
