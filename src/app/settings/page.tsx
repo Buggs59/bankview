@@ -3,13 +3,22 @@
 import { Card, Title, Text, Button, Flex, Badge, Divider, TextInput } from '@tremor/react';
 import { CreditCard, Plus, Trash2, CheckCircle2, AlertCircle, Loader2, Search } from 'lucide-react';
 import { useState, useTransition, useEffect } from 'react';
-import { connectBankAction, searchBanksAction } from '@/app/actions/bank';
+import { connectBankAction, searchBanksAction, getUserConnectionsAction, disconnectBankAction } from '@/app/actions/bank';
 
 export default function SettingsPage() {
   const [isPending, startTransition] = useTransition();
   const [connections, setConnections] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [availableBanks, setAvailableBanks] = useState<any[]>([]);
+
+  // Charger les connexions existantes
+  const refreshConnections = () => {
+    getUserConnectionsAction().then(setConnections);
+  };
+
+  useEffect(() => {
+    refreshConnections();
+  }, []);
 
   // Recherche des banques en temps réel (Debounce de 400ms)
   useEffect(() => {
@@ -36,6 +45,15 @@ export default function SettingsPage() {
       } catch (error: any) {
         alert(`Erreur technique: ${error.message}`);
       }
+    });
+  };
+
+  const handleDisconnect = (id: number) => {
+    if (!confirm("Voulez-vous vraiment déconnecter cette banque ?")) return;
+    startTransition(async () => {
+      const res = await disconnectBankAction(id);
+      if (res.success) refreshConnections();
+      else alert(res.error);
     });
   };
 
@@ -94,29 +112,39 @@ export default function SettingsPage() {
                 <div className="w-12 h-12 bg-slate-900 rounded-full flex items-center justify-center mb-4 text-slate-500">
                   <CreditCard size={24} />
                 </div>
-                <Text className="text-slate-400 font-medium">Aucun compte connecté pour le moment.</Text>
-                <Text className="text-slate-500 text-sm mt-1">L'agrégation bancaire vous permet d'automatiser vos relevés.</Text>
+                <Text className="text-slate-400 font-medium">Aucune banque connectée pour le moment.</Text>
+                <Text className="text-slate-500 text-sm mt-1">Vos relevés apparaîtront automatiquement après la connexion.</Text>
               </div>
             ) : (
-              connections.map((conn: any) => (
-                <div key={conn.id} className="p-4 bg-slate-950 border border-slate-800 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-indigo-600/20 rounded-xl flex items-center justify-center text-indigo-400">
-                      <CreditCard size={20} />
+              <div className="grid gap-4">
+                {connections.map((conn: any) => (
+                  <div key={conn.id} className="p-6 bg-slate-950 border border-slate-800 rounded-3xl flex items-center justify-between group hover:border-slate-700 transition-all">
+                    <div className="flex items-center gap-5">
+                      <div className="w-14 h-14 bg-indigo-600/10 rounded-2xl flex items-center justify-center text-indigo-400 border border-indigo-500/10 group-hover:scale-110 transition-transform">
+                        <CreditCard size={28} />
+                      </div>
+                      <div>
+                        <Title className="text-white text-xl">{conn.bank_name}</Title>
+                        <Flex className="mt-1 gap-3">
+                          <Badge color="emerald" icon={CheckCircle2} className="bg-emerald-500/10 border-none text-emerald-400 rounded-lg">
+                            Connecté
+                          </Badge>
+                          <Text className="text-slate-500 text-sm">
+                            {conn.bank_accounts?.length || 0} comptes synchronisés
+                          </Text>
+                        </Flex>
+                      </div>
                     </div>
-                    <div>
-                      <Text className="text-white font-semibold">{conn.bank_name}</Text>
-                      <Text className="text-slate-500 text-xs">Dernière synchro : {conn.last_sync || 'Jamais'}</Text>
-                    </div>
+                    <Button 
+                      variant="secondary" 
+                      icon={Trash2} 
+                      color="rose" 
+                      className="bg-rose-500/5 hover:bg-rose-500/20 text-rose-500 border-none rounded-2xl p-4 transition-all opacity-0 group-hover:opacity-100"
+                      onClick={() => handleDisconnect(conn.id)}
+                    />
                   </div>
-                  <div className="flex items-center gap-3">
-                    <Badge color="emerald" icon={CheckCircle2}>Actif</Badge>
-                    <button className="p-2 text-slate-500 hover:text-rose-500 transition-colors">
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                </div>
-              ))
+                ))}
+              </div>
             )}
           </div>
         </Card>

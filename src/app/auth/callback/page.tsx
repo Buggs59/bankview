@@ -10,6 +10,7 @@ export const dynamic = 'force-dynamic';
 async function CallbackResult({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const params = await searchParams;
   const code = params.code as string | undefined;
+  const state = params.state as string | undefined;
   const errorParam = params.error as string | undefined;
 
   if (errorParam) {
@@ -20,8 +21,8 @@ async function CallbackResult({ searchParams }: { searchParams: Promise<{ [key: 
     return <ErrorCard message="Aucun code de session retourné par la banque." />;
   }
 
-  // On appelle directement l'action serveur depuis le composant serveur
-  const res = await finalizeBankConnectionAction(code);
+  // On appelle l'action serveur avec le code ET l'état (qui contient le nom de la banque)
+  const res = await finalizeBankConnectionAction(code, state);
 
   if (res.error) {
     return <ErrorCard message={res.error} />;

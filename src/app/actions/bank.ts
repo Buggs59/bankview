@@ -84,7 +84,7 @@ export async function searchBanksAction(query: string = '') {
   }
 }
 
-export async function connectBankAction(bankConnectorId: string = 'BBVA') {
+export async function connectBankAction(bankId: string) {
   const supabase = await createClient();
   
   let { data: { user } } = await supabase.auth.getUser();
@@ -110,8 +110,9 @@ export async function connectBankAction(bankConnectorId: string = 'BBVA') {
   const redirectUrl = `${baseUrl}/auth/callback`;
 
   try {
-    // On passe l'ID de l'utilisateur dans le 'state' pour le récupérer au callback
-    const session = await startAuthorization(bankConnectorId, redirectUrl, user.id, 'FR');
+    // On passe l'ID de l'utilisateur ET le nom de la banque dans le 'state'
+    const stateData = JSON.stringify({ userId: user.id, bankName: bankId });
+    const session = await startAuthorization(bankId, redirectUrl, stateData, 'FR');
     if (session.url) {
       return { url: session.url };
     } else {
@@ -123,7 +124,7 @@ export async function connectBankAction(bankConnectorId: string = 'BBVA') {
   }
 }
 
-export async function finalizeBankConnectionAction(code: string) {
+export async function finalizeBankConnectionAction(code: string, stateString?: string) {
   try {
     const sessionData = await createSession(code);
     const sessionId = sessionData.session_id;
@@ -145,13 +146,24 @@ export async function finalizeBankConnectionAction(code: string) {
       return { error: "Authentification utilisateur requise. Essayez de vous reconnecter à l'application." };
     }
 
-    // 1. Enregistrer ou mettre à jour la connexion principale
+    // 1. Extraire le nom de la banque depuis le state si possible
+    let bankName = 'Banque';
+    try {
+      if (stateString) {
+        const stateObj = JSON.parse(stateString);
+        bankName = stateObj.bankName || 'Banque';
+      }
+    } catch (e) {
+      console.warn("Impossible de parser le state au callback", e);
+    }
+
+    // 2. Enregistrer ou mettre à jour la connexion principale
     const { data: connection, error: connError } = await supabase
       .from('bank_connections')
       .upsert({
         user_id: user.id,
         session_id: sessionId,
-        bank_name: 'BBVA', // On pourrait extraire dynamiquement si dispo
+        bank_name: bankName,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
       .select()
@@ -182,4 +194,40 @@ export async function finalizeBankConnectionAction(code: string) {
     console.error('Erreur lors de l’échange du code:', error);
     return { error: error.message || 'Erreur technique lors de la finalisation' };
   }
+}
+
+export async function getUserConnectionsAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('bank_connections')
+    .select(`
+      *,
+      bank_accounts (*)
+    `)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error("Erreur récupération connexions:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function disconnectBankAction(connectionId: number) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('bank_connections')
+    .delete()
+    .eq('id', connectionId);
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
 }
