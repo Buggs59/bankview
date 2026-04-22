@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { Card, Title, Text, Button, Divider } from '@tremor/react'
 import { Wallet, LogIn, UserPlus, Mail, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { login, signup } from '../auth/actions'
 import { useSearchParams } from 'next/navigation'
 
-export default function LoginPage() {
+function LoginContent() {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
   const [isLoading, setIsLoading] = useState(false)
   const searchParams = useSearchParams()
@@ -15,7 +15,6 @@ export default function LoginPage() {
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     setIsLoading(true)
-    // The form action will handle the actual server call via the 'action' prop
   }
 
   return (
@@ -118,3 +117,16 @@ export default function LoginPage() {
     </div>
   )
 }
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+      </div>
+    }>
+      <LoginContent />
+    </Suspense>
+  )
+}
+
