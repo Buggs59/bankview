@@ -16,12 +16,13 @@ export async function connectBankAction(siteUrl?: string) {
   // ===================
 
   const bankConnectorId = 'BBVA'; 
+  const headersList = await import('next/headers').then(h => h.headers());
+  const host = (await headersList).get('host');
   
-  // Sur Vercel, on force le HTTPS
-  let baseUrl = siteUrl || process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-  if (process.env.VERCEL_URL && !baseUrl.startsWith('https')) {
-    baseUrl = `https://${process.env.VERCEL_URL}`;
-  }
+  // On construit l'URL de base dynamiquement à partir de la requête actuelle
+  // pour être sûr de revenir sur le même domaine et ne pas perdre la session.
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  const baseUrl = `${protocol}://${host}`;
   
   const redirectUrl = `${baseUrl}/auth/callback`;
 
@@ -47,10 +48,19 @@ export async function finalizeBankConnectionAction(code: string) {
     const accounts = sessionData.accounts || [];
 
     const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    
+    // On essaie de récupérer l'utilisateur.
+    // Si getUser() échoue, on tente getSession() qui est parfois plus réactif sur les cookies
+    let { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      const { data: { session } } = await supabase.auth.getSession();
+      user = session?.user || null;
+    }
 
     if (!user) {
-      throw new Error("Authentification utilisateur requise.");
+      console.error("SESSION PERDUE AU CALLBACK : Aucun utilisateur trouvé");
+      return { error: "Authentification utilisateur requise. Essayez de vous reconnecter à l'application." };
     }
 
     // 1. Enregistrer ou mettre à jour la connexion principale
