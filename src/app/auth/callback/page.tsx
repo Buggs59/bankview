@@ -13,6 +13,8 @@ function CallbackContent() {
   const code = searchParams.get('code');
   const errorParam = searchParams.get('error');
 
+  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   useEffect(() => {
