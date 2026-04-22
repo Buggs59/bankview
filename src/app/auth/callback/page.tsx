@@ -13,18 +13,18 @@ function CallbackContent() {
   const code = searchParams.get('code');
   const errorParam = searchParams.get('error');
 
-  const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading');
-  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [errorDetails, setErrorDetails] = useState<string | null>(null);
 
   useEffect(() => {
     if (errorParam) {
       setStatus('error');
+      setErrorDetails(errorParam);
       return;
     }
 
     if (!code) {
       setStatus('error');
-      console.error('Aucun code retourné par la banque');
+      setErrorDetails('Aucun code retourné par la banque');
       return;
     }
 
@@ -33,11 +33,15 @@ function CallbackContent() {
         if (res.success) {
           setSessionId(res.sessionId);
           setStatus('success');
+        } else if (res.error) {
+          setStatus('error');
+          setErrorDetails(res.error);
         }
       })
       .catch((err) => {
         console.error(err);
         setStatus('error');
+        setErrorDetails(err.message || 'Erreur inconnue');
       });
   }, [code, errorParam]);
 
@@ -57,6 +61,11 @@ function CallbackContent() {
         <XCircle className="text-rose-500 mx-auto mb-4" size={48} />
         <Title className="text-white">Erreur de connexion</Title>
         <Text className="text-slate-400 mt-2">Nous n'avons pas pu valider votre compte bancaire.</Text>
+        {errorDetails && (
+          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl">
+            <Text className="text-rose-400 text-xs font-mono break-all">{errorDetails}</Text>
+          </div>
+        )}
         <Button className="mt-6 bg-slate-800 border-none hover:bg-slate-700" onClick={() => window.location.href = '/settings'}>
           Retour aux paramètres
         </Button>

@@ -86,8 +86,8 @@ export async function finalizeBankConnectionAction(code: string) {
     }
 
     return { success: true, sessionId };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur lors de l’échange du code:', error);
-    throw error;
+    return { error: error.message || 'Erreur technique lors de la finalisation' };
   }
 }
