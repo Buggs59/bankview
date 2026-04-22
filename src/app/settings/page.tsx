@@ -7,7 +7,7 @@ import { connectBankAction, searchBanksAction, getUserConnectionsAction, disconn
 
 export default function SettingsPage() {
   const [isPending, startTransition] = useTransition();
-  const [connections, setConnections] = useState([]);
+  const [connections, setConnections] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [availableBanks, setAvailableBanks] = useState<any[]>([]);
 
