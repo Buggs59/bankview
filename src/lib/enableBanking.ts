@@ -4,14 +4,17 @@ const ENABLE_BANKING_API_URL = 'https://api.enablebanking.com';
 
 export async function getEnableBankingToken() {
   const appId = process.env.ENABLE_BANKING_APP_ID;
-  const privateKeyPem = process.env.ENABLE_BANKING_PRIVATE_KEY;
+  let privateKeyPem = process.env.ENABLE_BANKING_PRIVATE_KEY;
 
   if (!appId || !privateKeyPem) {
+    console.error(`Missing credentials: AppId present: ${!!appId}, PrivateKey present: ${!!privateKeyPem}`);
     throw new Error('Enable Banking credentials missing in environment variables');
   }
 
+  // Nettoyage de la clé pour Vercel (gestion des \n et des guillemets éventuels)
+  privateKeyPem = privateKeyPem.replace(/\\n/g, '\n').replace(/^"|"$/g, '');
+
   // Convert PEM to a format jose can use
-  // Note: For RSA, we need to import the PKCS#8 or SPKI key
   const privateKey = await jose.importPKCS8(privateKeyPem, 'RS256');
 
   // Create JWT
