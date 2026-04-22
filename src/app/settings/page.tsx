@@ -73,7 +73,7 @@ export default function SettingsPage() {
                   onClick={() => handleConnect(bank.name)}
                   className="flex items-center gap-4 p-4 bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 rounded-2xl transition-all text-left group disabled:opacity-50"
                 >
-                  <div className=\"w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-colors\">
+                  <div className="w-10 h-10 bg-slate-900 rounded-xl flex items-center justify-center shrink-0 group-hover:bg-indigo-600/20 group-hover:text-indigo-400 transition-colors">
                     <CreditCard size={20} />
                   </div>
                   <div className="flex-1">

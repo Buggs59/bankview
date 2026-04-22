@@ -94,10 +94,9 @@ export async function connectBankAction(bankConnectorId: string = 'BBVA') {
   
   if (!user) {
     console.error("ERREUR SESSION ACTION : Aucun utilisateur trouvé après getUser et getSession");
-    return { error: 'Session perdue. Veuillez vous reconnecter puis rafraîchir la page (Touche F5).' };
+    return { error: "Utilisateur non identifié." };
   }
 
-  const bankConnectorId = 'BBVA'; 
   const headersList = await import('next/headers').then(h => h.headers());
   const host = (await headersList).get('host');
   
