@@ -32,11 +32,11 @@ export async function connectBankAction(siteUrl?: string) {
     if (session.url) {
       return { url: session.url };
     } else {
-      throw new Error('Pas d\'URL de redirection reçue de l\'API');
+      return { error: 'Pas d\'URL de redirection reçue de l\'API' };
     }
   } catch (error: any) {
     console.error('ERREUR AUTH BANQUE:', error);
-    throw new Error(`Détail technique : ${error.message || 'Erreur inconnue'}`);
+    return { error: `Détail technique : ${error.message || 'Erreur inconnue'}` };
   }
 }
 

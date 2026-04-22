@@ -15,11 +15,13 @@ export default function SettingsPage() {
     startTransition(async () => {
       try {
         const response = await connectBankAction(window.location.origin);
-        if (response?.url) {
+        if (response?.error) {
+          alert(`Erreur: ${response.error}`);
+        } else if (response?.url) {
           window.location.assign(response.url);
         }
-      } catch (error) {
-        alert("Erreur lors de l'initialisation de la connexion bancaire. Vérifiez vos clés API.");
+      } catch (error: any) {
+        alert(`Erreur technique: ${error.message}`);
       }
     });
   };
