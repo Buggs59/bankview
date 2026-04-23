@@ -120,7 +120,14 @@ export async function syncTransactionsAction() {
             };
 
             const labelVal = getLabel(tx);
-            const dateVal = tx.booking_date || tx.bookingDate || tx.value_date || tx.valueDate || tx.transaction_date || tx.transactionDate || new Date().toISOString().split('T')[0];
+            const dateVal = tx.booking_date || tx.bookingDate || 
+                           tx.value_date || tx.valueDate || 
+                           tx.transaction_date || tx.transactionDate || 
+                           tx.requested_execution_date || tx.requestedExecutionDate ||
+                           tx.expected_booking_date || tx.expectedBookingDate ||
+                           tx.expected_value_date || tx.expectedValueDate ||
+                           new Date().toISOString().split('T')[0];
+
             const idVal = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference || `${acc.id}-${dateVal}-${amountNum}-${labelVal.substring(0, 20)}`;
 
             // 3. Détection des transactions futures/en attente (is_advance)
