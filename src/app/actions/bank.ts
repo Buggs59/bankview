@@ -65,16 +65,39 @@ export async function syncTransactionsAction() {
         debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
 
         if (rawTransactions.length > 0) {
+          // Log d'une transaction échantillon pour voir la structure réelle en cas de libellé manquant
+          console.log("SAMPLE TRANSACTION STRUCTURE:", JSON.stringify(rawTransactions[0]));
+
           const transactionsToInsert = rawTransactions.map((tx: any) => {
-            // Helpers pour extraire les données de manière robuste (support camelCase et snake_case)
-            const amountVal = tx.transactionAmount?.amount || tx.transaction_amount?.amount || tx.amount?.value || tx.amount || 0;
+            // 1. Extraction du montant et gestion du signe (Débit/Crédit)
+            const rawAmt = tx.transactionAmount?.amount || tx.transaction_amount?.amount || tx.amount?.value || tx.amount || 0;
+            let amountNum = parseFloat(rawAmt);
+            
+            // Gestion de l'indicateur de signe propre aux API bancaires
+            const indicator = tx.creditDebitIndicator || tx.credit_debit_indicator || tx.transactionAmount?.creditDebitIndicator;
+            if (indicator === 'DBIT' && amountNum > 0) {
+              amountNum = -amountNum;
+            } else if (indicator === 'CRDT' && amountNum < 0) {
+              amountNum = Math.abs(amountNum);
+            }
+
+            // 2. Extraction robuste du libellé (plusieurs fallbacks)
+            const labelVal = tx.remittanceInformationUnstructured || 
+                             tx.remittance_information_unstructured || 
+                             tx.creditorName || 
+                             tx.creditor_name ||
+                             tx.debtorName ||
+                             tx.debtor_name ||
+                             tx.description || 
+                             tx.reference || 
+                             'Transaction sans libellé';
+
             const dateVal = tx.bookingDate || tx.booking_date || tx.valueDate || tx.value_date || new Date().toISOString().split('T')[0];
-            const labelVal = tx.remittanceInformationUnstructured || tx.remittance_information_unstructured || tx.description || tx.reference || 'Transaction sans libellé';
             const idVal = tx.transactionId || tx.transaction_id || tx.entryReference || tx.entry_reference || Math.random().toString(36).substring(7);
 
             return {
               user_id: user.id,
-              amount: parseFloat(amountVal),
+              amount: amountNum,
               label: labelVal,
               date_real: dateVal,
               bank_id: idVal,
