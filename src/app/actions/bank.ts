@@ -39,6 +39,8 @@ export async function syncTransactionsAction() {
 
     let debugMessages: string[] = [];
 
+    let rawSample = '';
+
     // 3. Pour chaque compte, synchroniser les transactions
     for (const acc of accounts) {
       try {
@@ -60,6 +62,10 @@ export async function syncTransactionsAction() {
 
         // --- 2. Fetch Transactions ---
         const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
+        
+        if (rawTransactions.length > 0 && !rawSample) {
+          rawSample = JSON.stringify(rawTransactions[0]).substring(0, 300); // On prend les 300 premiers caractères
+        }
         
         console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
         debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
@@ -157,7 +163,7 @@ export async function syncTransactionsAction() {
     return { 
       success: true, 
       count: totalImported, 
-      message: `${totalImported} transactions synchronisées. Détail API: ${debugMessages.join(' | ')}`
+      message: `${totalImported} transactions synchronisées. ${debugMessages.join(' | ')} | RAW SAMPLE: ${rawSample}`
     };
   } catch (error: any) {
     console.error('ERREUR SYNC GLOBALE:', error);
