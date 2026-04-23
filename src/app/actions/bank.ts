@@ -39,8 +39,6 @@ export async function syncTransactionsAction() {
 
     let debugMessages: string[] = [];
 
-    let rawSample = '';
-
     // 3. Pour chaque compte, synchroniser les transactions
     for (const acc of accounts) {
       try {
@@ -62,10 +60,6 @@ export async function syncTransactionsAction() {
 
         // --- 2. Fetch Transactions ---
         const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
-        
-        if (rawTransactions.length > 0 && !rawSample) {
-          rawSample = JSON.stringify(rawTransactions[0]).substring(0, 1000); 
-        }
         
         console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
         debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
@@ -99,10 +93,10 @@ export async function syncTransactionsAction() {
               };
 
               const fields = [
-                t.remittance_information_unstructured,
-                t.remittanceInformationUnstructured,
                 t.remittance_information,
                 t.remittanceInformation,
+                t.remittance_information_unstructured,
+                t.remittanceInformationUnstructured,
                 t.creditor_name,
                 t.creditorName,
                 t.merchant_name,
@@ -112,7 +106,8 @@ export async function syncTransactionsAction() {
                 t.additional_transaction_information,
                 t.additionalTransactionInformation,
                 t.description,
-                t.reference
+                t.reference,
+                t.note
               ];
               
               for (const f of fields) {
@@ -125,12 +120,17 @@ export async function syncTransactionsAction() {
             };
 
             const labelVal = getLabel(tx);
-            const dateVal = tx.bookingDate || tx.booking_date || tx.valueDate || tx.value_date || new Date().toISOString().split('T')[0];
-            const idVal = tx.transactionId || tx.transaction_id || tx.entryReference || tx.entry_reference || Math.random().toString(36).substring(7);
+            const dateVal = tx.booking_date || tx.bookingDate || tx.value_date || tx.valueDate || tx.transaction_date || tx.transactionDate || new Date().toISOString().split('T')[0];
+            const idVal = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference || `${acc.id}-${dateVal}-${amountNum}-${labelVal.substring(0, 20)}`;
 
             // 3. Détection des transactions futures/en attente (is_advance)
-            const status = tx.status || tx.transactionStatus || tx.entryStatus || 'BOOK';
-            const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'Pending') || (new Date(dateVal) > new Date());
+            const status = tx.status || tx.transaction_status || tx.transactionStatus || tx.entry_status || tx.entryStatus || 'BOOK';
+            
+            // On considère comme avance : les statuts connus OU si les dates réelles sont absentes (cas CMUT)
+            const hasNoDates = !tx.booking_date && !tx.bookingDate && !tx.value_date && !tx.valueDate && !tx.transaction_date && !tx.transactionDate;
+            const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'Pending' || status === 'OTHR') || 
+                             hasNoDates || 
+                             (new Date(dateVal) > new Date());
 
             return {
               user_id: user.id,
@@ -165,7 +165,7 @@ export async function syncTransactionsAction() {
     return { 
       success: true, 
       count: totalImported, 
-      message: `${totalImported} transactions synchronisées. ${debugMessages.join(' | ')} | RAW SAMPLE: ${rawSample}`
+      message: `${totalImported} transactions synchronisées. ${debugMessages.join(' | ')}`
     };
   } catch (error: any) {
     console.error('ERREUR SYNC GLOBALE:', error);
