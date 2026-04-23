@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync": "git add . && git commit -m \"sync: billiv2 ui overhaul\" && git push"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.10",

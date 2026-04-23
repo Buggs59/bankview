@@ -1,6 +1,6 @@
 import BottomNav from "@/components/BottomNav";
 
-export default function DashboardLayout({
+export default function TransactionsLayout({
   children,
 }: {
   children: React.ReactNode;
