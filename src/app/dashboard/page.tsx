@@ -44,11 +44,10 @@ export default function DashboardPage() {
     if (res.error) {
       setMessage(`Erreur: ${res.error}`);
     } else {
-      setMessage(`${res.count} transactions importées !`);
+      setMessage(res.message || `${res.count} transactions importées !`);
       // Rafraîchir les comptes (soldes)
       getBankAccountsAction().then(setBankAccounts);
     }
-    setTimeout(() => setMessage(''), 5000);
   };
 
   return (
