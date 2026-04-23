@@ -73,27 +73,56 @@ export async function syncTransactionsAction() {
             const rawAmt = tx.transactionAmount?.amount || tx.transaction_amount?.amount || tx.amount?.value || tx.amount || 0;
             let amountNum = parseFloat(rawAmt);
             
-            // Gestion de l'indicateur de signe propre aux API bancaires
-            const indicator = tx.creditDebitIndicator || tx.credit_debit_indicator || tx.transactionAmount?.creditDebitIndicator;
+            const indicator = tx.creditDebitIndicator || tx.credit_debit_indicator || tx.transactionAmount?.creditDebitIndicator || tx.amount?.creditDebitIndicator;
             if (indicator === 'DBIT' && amountNum > 0) {
               amountNum = -amountNum;
             } else if (indicator === 'CRDT' && amountNum < 0) {
               amountNum = Math.abs(amountNum);
             }
 
-            // 2. Extraction robuste du libellé (plusieurs fallbacks)
-            const labelVal = tx.remittanceInformationUnstructured || 
-                             tx.remittance_information_unstructured || 
-                             tx.creditorName || 
-                             tx.creditor_name ||
-                             tx.debtorName ||
-                             tx.debtor_name ||
-                             tx.description || 
-                             tx.reference || 
-                             'Transaction sans libellé';
+            // 2. Extraction robuste du libellé (plusieurs fallbacks, gestion des tableaux et objets)
+            const getLabel = (t: any) => {
+              const getValue = (val: any): string | null => {
+                if (!val) return null;
+                if (typeof val === 'string') return val.trim();
+                if (Array.isArray(val) && val.length > 0) return val.join(' ').trim();
+                if (typeof val === 'object') return val.name || val.value || JSON.stringify(val);
+                return null;
+              };
 
+              const fields = [
+                t.remittanceInformationUnstructured,
+                t.remittance_information_unstructured,
+                t.remittanceInformationUnstructuredArray,
+                t.remittance_information_unstructured_array,
+                t.creditorName,
+                t.creditor_name,
+                t.debtorName,
+                t.debtor_name,
+                t.merchantName,
+                t.merchant_name,
+                t.additionalTransactionInformation,
+                t.additional_transaction_information,
+                t.description,
+                t.reference
+              ];
+              
+              for (const f of fields) {
+                const v = getValue(f);
+                if (v && v.length > 0 && v !== 'null') return v;
+              }
+
+              // Fallback ultime sur le type de transaction si rien n'est trouvé
+              return t.proprietaryBankTransactionCode || t.bankTransactionCode || 'Transaction sans libellé';
+            };
+
+            const labelVal = getLabel(tx);
             const dateVal = tx.bookingDate || tx.booking_date || tx.valueDate || tx.value_date || new Date().toISOString().split('T')[0];
             const idVal = tx.transactionId || tx.transaction_id || tx.entryReference || tx.entry_reference || Math.random().toString(36).substring(7);
+
+            // 3. Détection des transactions futures/en attente (is_advance)
+            const status = tx.status || tx.transactionStatus || tx.entryStatus || 'BOOK';
+            const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'Pending') || (new Date(dateVal) > new Date());
 
             return {
               user_id: user.id,
@@ -102,6 +131,7 @@ export async function syncTransactionsAction() {
               date_real: dateVal,
               bank_id: idVal,
               accounting_period: dateVal.substring(0, 7),
+              is_advance: isAdvance,
               updated_at: new Date().toISOString()
             };
           });

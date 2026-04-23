@@ -37,11 +37,11 @@ export default function TransactionsPage() {
   );
 
   const totalDépenses = transactions
-    .filter(tx => tx.amount < 0)
+    .filter(tx => tx.amount < 0 && !tx.is_advance)
     .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
   const totalRevenus = transactions
-    .filter(tx => tx.amount > 0)
+    .filter(tx => tx.amount > 0 && !tx.is_advance)
     .reduce((sum, tx) => sum + tx.amount, 0);
 
   const formatDate = (dateStr: string) => {
@@ -143,9 +143,16 @@ export default function TransactionsPage() {
                     </Text>
                   </TableCell>
                   <TableCell className="text-center">
-                    <Badge color={item.amount < 0 ? 'rose' : 'emerald'} className="bg-opacity-10 border-none rounded-lg text-[10px] uppercase">
-                      {item.amount < 0 ? 'Sortie' : 'Entrée'}
-                    </Badge>
+                    <Flex justifyContent="center" className="gap-2">
+                      <Badge color={item.amount < 0 ? 'rose' : 'emerald'} className="bg-opacity-10 border-none rounded-lg text-[10px] uppercase">
+                        {item.amount < 0 ? 'Sortie' : 'Entrée'}
+                      </Badge>
+                      {item.is_advance && (
+                        <Badge color="amber" className="bg-opacity-10 border-none rounded-lg text-[10px] uppercase">
+                          Prévu
+                        </Badge>
+                      )}
+                    </Flex>
                   </TableCell>
                 </TableRow>
               ))}
