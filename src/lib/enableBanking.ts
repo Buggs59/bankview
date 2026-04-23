@@ -101,13 +101,16 @@ export async function createSession(code: string) {
   return response.json();
 }
 
-export async function getAccountTransactions(accountUid: string, dateFrom?: string) {
-  const token = await getEnableBankingToken();
+export async function getAccountTransactions(accountUid: string, dateFrom?: string, accessToken?: string) {
+  // On utilise le jeton d'accès utilisateur s'il est fourni, sinon on retombe sur le token APP
+  const token = accessToken || await getEnableBankingToken();
   
   let url = `${ENABLE_BANKING_API_URL}/accounts/${accountUid}/transactions`;
   if (dateFrom) {
     url += `?date_from=${dateFrom}`;
   }
+
+  console.log(`Appel Enable Banking Transactions: ${url} (Token type: ${accessToken ? 'USER' : 'APP'})`);
 
   const response = await fetch(url, {
     method: 'GET',
@@ -123,5 +126,6 @@ export async function getAccountTransactions(accountUid: string, dateFrom?: stri
   }
 
   const data = await response.json();
+  console.log(`Transactions reçues pour ${accountUid}: ${data.transactions?.length || 0}`);
   return data.transactions || [];
 }

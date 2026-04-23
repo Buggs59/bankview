@@ -16,17 +16,21 @@ export async function syncTransactionsAction() {
     }
     if (!user) throw new Error("Utilisateur non connecté");
 
-    // 2. Récupérer tous les comptes bancaires liés à cet utilisateur
+    // 2. Récupérer tous les comptes bancaires liés à cet utilisateur, avec leur token d'accès
     const { data: accounts, error: accError } = await supabase
       .from('bank_accounts')
-      .select('*, bank_connections!inner(user_id)')
+      .select('*, bank_connections!inner(user_id, access_token)')
       .eq('bank_connections.user_id', user.id);
 
     if (accError) throw new Error(`Erreur récupération comptes: ${accError.message}`);
-    if (!accounts || accounts.length === 0) return { success: true, count: 0, message: "Aucun compte lié trouvé." };
+    if (!accounts || accounts.length === 0) {
+      console.log("Aucun compte lié trouvé en base de données.");
+      return { success: true, count: 0, message: "Aucun compte lié trouvé." };
+    }
+
+    console.log(`${accounts.length} comptes trouvés pour synchronisation.`);
 
     let totalImported = 0;
-    // On demande les 90 derniers jours par défaut pour la première synchro (limite standard PSD2)
     const ninetyDaysAgo = new Date();
     ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89);
     const dateFrom = ninetyDaysAgo.toISOString().split('T')[0];
@@ -36,16 +40,21 @@ export async function syncTransactionsAction() {
     // 3. Pour chaque compte, synchroniser les transactions
     for (const acc of accounts) {
       try {
-        const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom);
+        const userAccessToken = (acc.bank_connections as any)?.access_token;
+        console.log(`Synchronisation du compte ${acc.name} (${acc.bank_uid})...`);
         
+        const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
+        
+        console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
+
         if (rawTransactions.length > 0) {
           const transactionsToInsert = rawTransactions.map((tx: any) => ({
             user_id: user.id,
             amount: parseFloat(tx.amount.value),
             label: tx.description || tx.reference || 'Transaction sans libellé',
             date_real: tx.booking_date || tx.value_date,
-            bank_id: tx.transaction_id || tx.entry_reference, // Identifiant unique pour onConflict
-            accounting_period: (tx.booking_date || tx.value_date).substring(0, 7), // Format YYYY-MM
+            bank_id: tx.transaction_id || tx.entry_reference,
+            accounting_period: (tx.booking_date || tx.value_date).substring(0, 7),
             updated_at: new Date().toISOString()
           }));
 
@@ -57,10 +66,11 @@ export async function syncTransactionsAction() {
             console.error(`Erreur insertion transactions pour compte ${acc.id}:`, txError);
           } else {
             totalImported += transactionsToInsert.length;
+            console.log(`${transactionsToInsert.length} transactions insérées/mises à jour en base.`);
           }
         }
       } catch (err) {
-        console.error(`Erreur sync compte ${acc.id}:`, err);
+        console.error(`Erreur critique sync compte ${acc.id}:`, err);
       }
     }
 
@@ -133,6 +143,7 @@ export async function finalizeBankConnectionAction(code: string, stateString?: s
   try {
     const sessionData = await createSession(code);
     const sessionId = sessionData.session_id;
+    const accessToken = sessionData.access_token; // Récupération du jeton d'accès
     const accounts = sessionData.accounts || [];
 
     const supabase = await createClient();
@@ -168,6 +179,7 @@ export async function finalizeBankConnectionAction(code: string, stateString?: s
       .upsert({
         user_id: user.id,
         session_id: sessionId,
+        access_token: accessToken, // Sauvegarde du jeton d'accès
         bank_name: bankName,
         updated_at: new Date().toISOString()
       }, { onConflict: 'user_id' })
