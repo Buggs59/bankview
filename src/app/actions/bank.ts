@@ -64,7 +64,7 @@ export async function syncTransactionsAction() {
         const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
         
         if (rawTransactions.length > 0 && !rawSample) {
-          rawSample = JSON.stringify(rawTransactions[0]).substring(0, 300); // On prend les 300 premiers caractères
+          rawSample = JSON.stringify(rawTransactions[0]).substring(0, 1000); 
         }
         
         console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
@@ -76,10 +76,10 @@ export async function syncTransactionsAction() {
 
           const transactionsToInsert = rawTransactions.map((tx: any) => {
             // 1. Extraction du montant et gestion du signe (Débit/Crédit)
-            const rawAmt = tx.transactionAmount?.amount || tx.transaction_amount?.amount || tx.amount?.value || tx.amount || 0;
+            const rawAmt = tx.transaction_amount?.amount || tx.transactionAmount?.amount || tx.amount?.value || tx.amount || 0;
             let amountNum = parseFloat(rawAmt);
             
-            const indicator = tx.creditDebitIndicator || tx.credit_debit_indicator || tx.transactionAmount?.creditDebitIndicator || tx.amount?.creditDebitIndicator;
+            const indicator = tx.credit_debit_indicator || tx.creditDebitIndicator || tx.transaction_amount?.credit_debit_indicator || tx.transactionAmount?.creditDebitIndicator || tx.amount?.credit_debit_indicator;
             if (indicator === 'DBIT' && amountNum > 0) {
               amountNum = -amountNum;
             } else if (indicator === 'CRDT' && amountNum < 0) {
@@ -91,35 +91,37 @@ export async function syncTransactionsAction() {
               const getValue = (val: any): string | null => {
                 if (!val) return null;
                 if (typeof val === 'string') return val.trim();
-                if (Array.isArray(val) && val.length > 0) return val.join(' ').trim();
-                if (typeof val === 'object') return val.name || val.value || JSON.stringify(val);
+                if (Array.isArray(val) && val.length > 0) {
+                  return val.map(v => typeof v === 'object' ? (v.name || v.value || v.unstructured || JSON.stringify(v)) : v).join(' ').trim();
+                }
+                if (typeof val === 'object') return val.name || val.value || val.unstructured || JSON.stringify(val);
                 return null;
               };
 
               const fields = [
-                t.remittanceInformationUnstructured,
                 t.remittance_information_unstructured,
-                t.remittanceInformationUnstructuredArray,
-                t.remittance_information_unstructured_array,
-                t.creditorName,
+                t.remittanceInformationUnstructured,
+                t.remittance_information,
+                t.remittanceInformation,
                 t.creditor_name,
-                t.debtorName,
-                t.debtor_name,
-                t.merchantName,
+                t.creditorName,
                 t.merchant_name,
-                t.additionalTransactionInformation,
+                t.merchantName,
+                t.debtor_name,
+                t.debtorName,
                 t.additional_transaction_information,
+                t.additionalTransactionInformation,
                 t.description,
                 t.reference
               ];
               
               for (const f of fields) {
                 const v = getValue(f);
-                if (v && v.length > 0 && v !== 'null') return v;
+                if (v && v.length > 0 && v !== 'null' && v !== '{}') return v;
               }
 
               // Fallback ultime sur le type de transaction si rien n'est trouvé
-              return t.proprietaryBankTransactionCode || t.bankTransactionCode || 'Transaction sans libellé';
+              return t.proprietary_bank_transaction_code || t.bank_transaction_code || t.proprietaryBankTransactionCode || t.bankTransactionCode || 'Transaction sans libellé';
             };
 
             const labelVal = getLabel(tx);
