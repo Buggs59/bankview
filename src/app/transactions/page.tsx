@@ -68,26 +68,26 @@ export default function TransactionsPage() {
         </div>
 
         {/* Bar Chart Mockup based on Billi */}
-        <div className="h-40 flex items-end justify-between gap-1.5 px-2">
-          {[20, 35, 90, 45, 30, 25, 20].map((h, i) => (
-            <div key={i} className="flex-1 flex flex-col items-center gap-2">
+        <div className="h-40 flex items-end justify-between gap-2 px-2 border-b border-white/5 pb-2">
+          {[40, 65, 100, 75, 50, 45, 40].map((h, i) => (
+            <div key={i} className="flex-1 flex flex-col items-center gap-2 h-full justify-end">
               <div 
-                className={`w-full rounded-sm transition-all duration-700 ${i === 2 ? 'bg-[#8c8dfa]' : 'bg-[#2c2c2e]'}`} 
-                style={{ height: `${h}%` }} 
+                className={`w-full rounded-t-lg transition-all duration-1000 ease-out ${i === 2 ? 'bg-[#8c8dfa]' : 'bg-[#2c2c2e]'}`} 
+                style={{ height: `${h}%`, minHeight: '4px' }} 
               />
-              <span className="text-[#8e8e93] text-[9px] uppercase">{['Sa', 'Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve'][i]}</span>
+              <span className="text-[#8e8e93] text-[10px] font-bold uppercase tracking-tighter">{['Sa', 'Di', 'Lu', 'Ma', 'Me', 'Je', 'Ve'][i]}</span>
             </div>
           ))}
         </div>
 
         {/* Timeframe Toggle */}
         <div className="flex justify-center">
-            <div className="bg-[#1c1c1e] p-1 rounded-full flex gap-1">
+            <div className="bg-[#1c1c1e] p-1 rounded-full flex gap-1 border border-white/5">
                 {['W', 'M', 'Y'].map((t) => (
                     <button
                         key={t}
                         onClick={() => setTimeframe(t as any)}
-                        className={`w-12 py-1.5 rounded-full text-xs font-bold transition-colors ${timeframe === t ? 'bg-[#2c2c2e] text-white' : 'text-[#8e8e93]'}`}
+                        className={`w-12 py-1.5 rounded-full text-xs font-bold transition-all ${timeframe === t ? 'bg-[#2c2c2e] text-white shadow-lg' : 'text-[#8e8e93]'}`}
                     >
                         {t}
                     </button>
@@ -98,14 +98,14 @@ export default function TransactionsPage() {
 
       {/* Search and List */}
       <div className="space-y-6">
-        <div className="flex items-center justify-end">
-            <div className="relative">
+        <div className="flex items-center justify-end px-2">
+            <div className="relative w-full max-w-[200px]">
                 <input 
                     type="text" 
                     placeholder="Rechercher" 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="bg-[#1c1c1e] text-sm text-white rounded-full py-2 pl-4 pr-10 w-40 focus:w-60 transition-all outline-none border border-transparent focus:border-white/10"
+                    className="bg-[#1c1c1e] text-sm text-white rounded-full py-2.5 pl-4 pr-10 w-full outline-none border border-white/5 focus:border-[#8c8dfa]/50 transition-all"
                 />
                 <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
             </div>
@@ -114,27 +114,46 @@ export default function TransactionsPage() {
         <div className="space-y-8">
             {Object.keys(groupedTx).map((month, mIdx) => (
                 <div key={month} className="space-y-4 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 1) * 100}ms` }}>
-                    <div className="flex justify-between items-center px-1">
+                    <div className="flex justify-between items-center px-2">
                         <div className="flex items-center gap-2">
-                            <Calendar size={16} className="text-[#8e8e93]" />
-                            <h2 className="text-white font-bold">{month}</h2>
+                            <div className="w-8 h-8 rounded-full bg-[#8c8dfa]/10 flex items-center justify-center">
+                                <Calendar size={14} className="text-[#8c8dfa]" />
+                            </div>
+                            <h2 className="text-white font-bold text-lg">{month}</h2>
                         </div>
-                        <span className={`font-bold ${groupedTx[month].total < 0 ? 'text-[#34d399]' : 'text-white'}`}>
+                        <span className={`font-bold text-sm bg-[#1c1c1e] px-3 py-1 rounded-full border border-white/5 ${groupedTx[month].total < 0 ? 'text-[#34d399]' : 'text-white'}`}>
                             {groupedTx[month].total > 0 ? '-' : '+'} €{Math.abs(groupedTx[month].total).toFixed(2)}
-                            <ChevronDown size={14} className="inline ml-1 text-[#8e8e93]" />
                         </span>
                     </div>
 
                     <div className="space-y-1">
                         {groupedTx[month].txs.map((tx) => {
                             const isNegative = tx.amount < 0;
+                            const txDate = new Date(tx.date_real);
                             return (
-                                <div key={tx.id} className="flex justify-between items-center py-3 px-2 rounded-2xl hover:bg-[#1c1c1e] transition-colors group">
-                                    <div className="flex flex-col">
-                                        <span className="text-white font-medium text-sm group-hover:text-[#8c8dfa] transition-colors">{tx.label}</span>
-                                        {tx.is_advance && <span className="text-[#ffd60a] text-[10px] font-bold uppercase tracking-wider">Prévu</span>}
+                                <div key={tx.id} className="flex justify-between items-center py-4 px-3 rounded-2xl hover:bg-[#1c1c1e] transition-all group border border-transparent hover:border-white/5">
+                                    <div className="flex items-center gap-4 flex-1">
+                                        <div className="flex-none flex flex-col items-center justify-center w-12 h-12 bg-[#1c1c1e] rounded-2xl border border-white/10 group-hover:border-[#8c8dfa]/30 transition-colors">
+                                            <span className="text-[10px] text-[#8e8e93] font-bold uppercase leading-none mb-1">
+                                                {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
+                                            </span>
+                                            <span className="text-base text-white font-bold leading-none">
+                                                {txDate.getDate()}
+                                            </span>
+                                        </div>
+                                        <div className="flex flex-col min-w-0">
+                                            <span className="text-white font-semibold text-sm group-hover:text-[#8c8dfa] transition-colors truncate">{tx.label}</span>
+                                            <div className="flex items-center gap-2">
+                                                {tx.is_advance && (
+                                                    <span className="text-[#ffd60a] text-[9px] font-black uppercase tracking-widest bg-[#ffd60a]/10 px-1.5 py-0.5 rounded">
+                                                        Prévu
+                                                    </span>
+                                                )}
+                                                <span className="text-[#8e8e93] text-[10px]">{tx.category?.name || 'Général'}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <span className={`text-sm font-bold ${!isNegative ? 'text-[#34d399]' : 'text-white'}`}>
+                                    <span className={`text-base font-bold shrink-0 ml-4 ${!isNegative ? 'text-[#34d399]' : 'text-white'}`}>
                                         {isNegative ? '' : '+'}€{Math.abs(tx.amount).toFixed(2)}
                                     </span>
                                 </div>

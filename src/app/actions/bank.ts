@@ -31,9 +31,10 @@ export async function syncTransactionsAction() {
     console.log(`${accounts.length} comptes trouvés pour synchronisation.`);
 
     let totalImported = 0;
-    const ninetyDaysAgo = new Date();
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89);
-    const dateFrom = ninetyDaysAgo.toISOString().split('T')[0];
+    const rangeInDays = 729; // Récupérer 2 ans d'historique si possible
+    const historyDate = new Date();
+    historyDate.setDate(historyDate.getDate() - rangeInDays);
+    const dateFrom = historyDate.toISOString().split('T')[0];
     
     console.log(`Début de la synchronisation pour l'utilisateur ${user.id} depuis le ${dateFrom}`);
 
@@ -80,7 +81,7 @@ export async function syncTransactionsAction() {
               amountNum = Math.abs(amountNum);
             }
 
-            // 2. Extraction robuste du libellé (plusieurs fallbacks, gestion des tableaux et objets)
+            // 2. Extraction robuste du libellé
             const getLabel = (t: any) => {
               const getValue = (val: any): string | null => {
                 if (!val) return null;
@@ -115,11 +116,18 @@ export async function syncTransactionsAction() {
                 if (v && v.length > 0 && v !== 'null' && v !== '{}') return v;
               }
 
-              // Fallback ultime sur le type de transaction si rien n'est trouvé
+              // Fallback sur le code MCC ou le type
+              const mcc = t.merchant_category_code || t.merchantCategoryCode;
+              if (mcc) return `Catégorie MCC: ${mcc}`;
+
               return t.proprietary_bank_transaction_code || t.bank_transaction_code || t.proprietaryBankTransactionCode || t.bankTransactionCode || 'Transaction sans libellé';
             };
 
             const labelVal = getLabel(tx);
+            if (!tx.booking_date && !tx.bookingDate && !tx.transaction_date && !tx.transactionDate) {
+              console.log("DATELESS TRANSACTION DETECTED:", JSON.stringify(tx));
+            }
+
             const dateVal = tx.booking_date || tx.bookingDate || 
                            tx.value_date || tx.valueDate || 
                            tx.transaction_date || tx.transactionDate || 
@@ -133,7 +141,6 @@ export async function syncTransactionsAction() {
             // 3. Détection des transactions futures/en attente (is_advance)
             const status = tx.status || tx.transaction_status || tx.transactionStatus || tx.entry_status || tx.entryStatus || 'BOOK';
             
-            // On considère comme avance : les statuts connus OU si les dates réelles sont absentes (cas CMUT)
             const hasNoDates = !tx.booking_date && !tx.bookingDate && !tx.value_date && !tx.valueDate && !tx.transaction_date && !tx.transactionDate;
             const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'Pending' || status === 'OTHR') || 
                              hasNoDates || 
@@ -147,6 +154,9 @@ export async function syncTransactionsAction() {
               bank_id: idVal,
               accounting_period: dateVal.substring(0, 7),
               is_advance: isAdvance,
+              raw_data: tx,
+              mcc: tx.merchant_category_code || tx.merchantCategoryCode || null,
+              balance_after: tx.balance_after_transaction?.balanceAmount?.amount || tx.balanceAfterTransaction?.balanceAmount?.amount || null,
               updated_at: new Date().toISOString()
             };
           });
