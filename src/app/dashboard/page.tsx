@@ -21,20 +21,35 @@ const valueFormatter = (number: number) => `€ ${Intl.NumberFormat('fr').format
 
 import { useState, useEffect } from 'react';
 import { getBankAccountsAction } from '@/app/actions/accounts';
-import { syncTransactionsAction } from '@/app/actions/bank';
+import { syncTransactionsAction, getTransactionsAction } from '@/app/actions/bank';
 
 export default function DashboardPage() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
+  const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    getBankAccountsAction().then(data => {
-      setBankAccounts(data);
+    Promise.all([
+      getBankAccountsAction(),
+      syncTransactionsAction().then(() => getTransactionsAction()) // On s'assure d'avoir les tx après sync si besoin
+    ]).then(([accounts, txs]) => {
+      setBankAccounts(accounts);
+      setTransactions(txs || []);
       setLoading(false);
     });
   }, []);
+
+  const totalDépenses = transactions
+    .filter(tx => tx.amount < 0 && !tx.is_advance)
+    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+  const totalRevenus = transactions
+    .filter(tx => tx.amount > 0 && !tx.is_advance)
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const soldeRestant = totalRevenus - totalDépenses;
 
   const handleSync = async () => {
     setSyncing(true);
@@ -96,7 +111,7 @@ export default function DashboardPage() {
           <Flex alignItems="start">
             <div>
               <Text className="text-slate-400">Total Entrées (Période)</Text>
-              <Metric className="text-white font-bold">2 500 €</Metric>
+              <Metric className="text-white font-bold">{valueFormatter(totalRevenus)}</Metric>
             </div>
             <Badge icon={ArrowUpRight} color="emerald">
               Stable
@@ -108,7 +123,7 @@ export default function DashboardPage() {
           <Flex alignItems="start">
             <div>
               <Text className="text-slate-400">Total Sorties (Période)</Text>
-              <Metric className="text-white font-bold">2 150 €</Metric>
+              <Metric className="text-white font-bold">{valueFormatter(totalDépenses)}</Metric>
             </div>
             <Badge icon={ArrowDownLeft} color="rose">
               -12%
@@ -119,7 +134,7 @@ export default function DashboardPage() {
         <Card className="bg-slate-900 border-slate-800 ring-0 shadow-xl" decoration="top" decorationColor="indigo">
           <div>
             <Text className="text-slate-400">Solde Restant</Text>
-            <Metric className="text-white font-bold">350 €</Metric>
+            <Metric className="text-white font-bold">{valueFormatter(soldeRestant)}</Metric>
           </div>
         </Card>
       </Grid>
