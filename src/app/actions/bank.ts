@@ -26,7 +26,12 @@ export async function syncTransactionsAction() {
     if (!accounts || accounts.length === 0) return { success: true, count: 0, message: "Aucun compte lié trouvé." };
 
     let totalImported = 0;
-    const dateFrom = "2024-01-01"; // On remonte très loin pour récupérer le maximum
+    // On demande les 90 derniers jours par défaut pour la première synchro (limite standard PSD2)
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 89);
+    const dateFrom = ninetyDaysAgo.toISOString().split('T')[0];
+    
+    console.log(`Début de la synchronisation pour l'utilisateur ${user.id} depuis le ${dateFrom}`);
 
     // 3. Pour chaque compte, synchroniser les transactions
     for (const acc of accounts) {

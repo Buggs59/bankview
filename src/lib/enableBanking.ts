@@ -42,6 +42,7 @@ export async function startAuthorization(bankId: string, redirectUrl: string, st
     body: JSON.stringify({
       access: {
         valid_until: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        scopes: ['accounts', 'balances', 'transactions'],
       },
       aspsp: {
         name: bankId,
