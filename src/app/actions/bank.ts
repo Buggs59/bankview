@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 
-import { startAuthorization, getAvailableBanks, createSession, getAccountTransactions } from '@/lib/enableBanking';
+import { startAuthorization, getAvailableBanks, createSession, getAccountTransactions, getAccountBalances } from '@/lib/enableBanking';
 
 export async function syncTransactionsAction() {
   try {
@@ -37,23 +37,40 @@ export async function syncTransactionsAction() {
     
     console.log(`Début de la synchronisation pour l'utilisateur ${user.id} depuis le ${dateFrom}`);
 
+    let debugMessages: string[] = [];
+
     // 3. Pour chaque compte, synchroniser les transactions
     for (const acc of accounts) {
       try {
         const userAccessToken = (acc.bank_connections as any)?.access_token;
         console.log(`Synchronisation du compte ${acc.name} (${acc.bank_uid})...`);
         
+        // --- 1. Fetch Balances ---
+        try {
+          const balances = await getAccountBalances(acc.bank_uid, userAccessToken);
+          if (balances && balances.length > 0) {
+            const amount = balances[0].balanceAmount?.amount;
+            if (amount !== undefined) {
+              await supabase.from('bank_accounts').update({ balance: parseFloat(amount) }).eq('id', acc.id);
+            }
+          }
+        } catch (balErr) {
+          console.error(`Erreur fetch balances pour ${acc.bank_uid}:`, balErr);
+        }
+
+        // --- 2. Fetch Transactions ---
         const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
         
         console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
+        debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
 
         if (rawTransactions.length > 0) {
           const transactionsToInsert = rawTransactions.map((tx: any) => ({
             user_id: user.id,
             amount: parseFloat(tx.amount.value),
-            label: tx.description || tx.reference || 'Transaction sans libellé',
+            label: tx.description || tx.reference || tx.remittance_information_unstructured || 'Transaction sans libellé',
             date_real: tx.booking_date || tx.value_date,
-            bank_id: tx.transaction_id || tx.entry_reference,
+            bank_id: tx.transaction_id || tx.entry_reference || Math.random().toString(36).substring(7), // Fallback if no ID
             accounting_period: (tx.booking_date || tx.value_date).substring(0, 7),
             updated_at: new Date().toISOString()
           }));
@@ -64,17 +81,23 @@ export async function syncTransactionsAction() {
 
           if (txError) {
             console.error(`Erreur insertion transactions pour compte ${acc.id}:`, txError);
+            debugMessages.push(`Erreur DB: ${txError.message}`);
           } else {
             totalImported += transactionsToInsert.length;
             console.log(`${transactionsToInsert.length} transactions insérées/mises à jour en base.`);
           }
         }
-      } catch (err) {
+      } catch (err: any) {
         console.error(`Erreur critique sync compte ${acc.id}:`, err);
+        debugMessages.push(`Erreur API ${acc.name}: ${err.message}`);
       }
     }
 
-    return { success: true, count: totalImported };
+    return { 
+      success: true, 
+      count: totalImported, 
+      message: `${totalImported} transactions synchronisées. Détail API: ${debugMessages.join(' | ')}`
+    };
   } catch (error: any) {
     console.error('ERREUR SYNC GLOBALE:', error);
     return { error: error.message || 'Erreur lors de la synchronisation des transactions' };

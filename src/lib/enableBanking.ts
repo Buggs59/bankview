@@ -129,3 +129,26 @@ export async function getAccountTransactions(accountUid: string, dateFrom?: stri
   console.log(`Transactions reçues pour ${accountUid}: ${data.transactions?.length || 0}`);
   return data.transactions || [];
 }
+
+export async function getAccountBalances(accountUid: string, accessToken?: string) {
+  const token = accessToken || await getEnableBankingToken();
+  
+  const url = `${ENABLE_BANKING_API_URL}/accounts/${accountUid}/balances`;
+  console.log(`Appel Enable Banking Balances: ${url} (Token type: ${accessToken ? 'USER' : 'APP'})`);
+
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error(`ENABLE BANKING BALANCES ERROR (${accountUid}):`, errorText);
+    throw new Error(`Failed to fetch balances: ${errorText}`);
+  }
+
+  const data = await response.json();
+  return data.balances || [];
+}
