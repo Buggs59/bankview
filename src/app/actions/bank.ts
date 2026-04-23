@@ -231,3 +231,23 @@ export async function disconnectBankAction(connectionId: number) {
 
   return { success: true };
 }
+
+export async function getTransactionsAction() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('date_real', { ascending: false });
+
+  if (error) {
+    console.error("Erreur récupération transactions:", error);
+    return [];
+  }
+
+  return data || [];
+}
