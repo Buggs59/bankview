@@ -49,7 +49,7 @@ export async function syncTransactionsAction() {
         try {
           const balances = await getAccountBalances(acc.bank_uid, userAccessToken);
           if (balances && balances.length > 0) {
-            const amount = balances[0].balanceAmount?.amount;
+            const amount = balances[0].balanceAmount?.amount || balances[0].balance_amount?.amount;
             if (amount !== undefined) {
               await supabase.from('bank_accounts').update({ balance: parseFloat(amount) }).eq('id', acc.id);
             }
@@ -65,15 +65,23 @@ export async function syncTransactionsAction() {
         debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
 
         if (rawTransactions.length > 0) {
-          const transactionsToInsert = rawTransactions.map((tx: any) => ({
-            user_id: user.id,
-            amount: parseFloat(tx.amount.value),
-            label: tx.description || tx.reference || tx.remittance_information_unstructured || 'Transaction sans libellé',
-            date_real: tx.booking_date || tx.value_date,
-            bank_id: tx.transaction_id || tx.entry_reference || Math.random().toString(36).substring(7), // Fallback if no ID
-            accounting_period: (tx.booking_date || tx.value_date).substring(0, 7),
-            updated_at: new Date().toISOString()
-          }));
+          const transactionsToInsert = rawTransactions.map((tx: any) => {
+            // Helpers pour extraire les données de manière robuste (support camelCase et snake_case)
+            const amountVal = tx.transactionAmount?.amount || tx.transaction_amount?.amount || tx.amount?.value || tx.amount || 0;
+            const dateVal = tx.bookingDate || tx.booking_date || tx.valueDate || tx.value_date || new Date().toISOString().split('T')[0];
+            const labelVal = tx.remittanceInformationUnstructured || tx.remittance_information_unstructured || tx.description || tx.reference || 'Transaction sans libellé';
+            const idVal = tx.transactionId || tx.transaction_id || tx.entryReference || tx.entry_reference || Math.random().toString(36).substring(7);
+
+            return {
+              user_id: user.id,
+              amount: parseFloat(amountVal),
+              label: labelVal,
+              date_real: dateVal,
+              bank_id: idVal,
+              accounting_period: dateVal.substring(0, 7),
+              updated_at: new Date().toISOString()
+            };
+          });
 
           const { error: txError } = await supabase
             .from('transactions')
