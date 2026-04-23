@@ -1,24 +1,8 @@
 'use client';
 
-import { 
-  Card, 
-  Title, 
-  Text, 
-  Table, 
-  TableHead, 
-  TableRow, 
-  TableHeaderCell, 
-  TableBody, 
-  TableCell, 
-  Badge, 
-  TextInput,
-  Flex,
-  Metric,
-  Grid
-} from '@tremor/react';
-import { Search, ArrowUpRight, ArrowDownLeft, Calendar } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getTransactionsAction } from '@/app/actions/bank';
+import { Search } from 'lucide-react';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -36,136 +20,153 @@ export default function TransactionsPage() {
     tx.label.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const totalDépenses = transactions
-    .filter(tx => tx.amount < 0 && !tx.is_advance)
-    .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+  // Compute Last 7 Days spending
+  const today = new Date();
+  const sevenDaysAgo = new Date(today);
+  sevenDaysAgo.setDate(today.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
 
-  const totalRevenus = transactions
-    .filter(tx => tx.amount > 0 && !tx.is_advance)
-    .reduce((sum, tx) => sum + tx.amount, 0);
+  const last7DaysTransactions = transactions.filter(tx => {
+    const txDate = new Date(tx.date_real);
+    return tx.amount < 0 && !tx.is_advance && txDate >= sevenDaysAgo && txDate <= today;
+  });
+
+  const last7DaysTotal = last7DaysTransactions.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+  // Group by day for the chart
+  const days = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+  const chartData = Array.from({ length: 7 }).map((_, i) => {
+    const d = new Date(sevenDaysAgo);
+    d.setDate(sevenDaysAgo.getDate() + i);
+    const dayStr = d.toISOString().split('T')[0];
+    const total = last7DaysTransactions
+      .filter(tx => tx.date_real.startsWith(dayStr))
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    return {
+      label: days[d.getDay()],
+      date: d.getDate(),
+      total
+    };
+  });
+
+  const maxTotal = Math.max(...chartData.map(d => d.total), 1); // prevent div by zero
 
   const formatDate = (dateStr: string) => {
-    return new Date(dateStr).toLocaleDateString('fr-FR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric'
-    });
+    const d = new Date(dateStr);
+    return {
+      dayStr: d.getDate().toString().padStart(2, '0'),
+      monthStr: d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '')
+    };
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR'
-    }).format(amount);
-  };
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center pt-32">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <Title className="text-3xl font-bold text-white">Transactions</Title>
-        <Text className="text-slate-400">Historique complet de vos mouvements bancaires.</Text>
+    <div className="animate-in fade-in duration-500 max-w-md mx-auto w-full space-y-8">
+      
+      {/* Spending Chart Section */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-end">
+          <div>
+            <h2 className="text-[#8e8e93] text-sm font-medium mb-1">Dépenses 7 derniers jours</h2>
+            <div className="text-4xl font-semibold text-white tracking-tight">
+              €{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 2 }).format(last7DaysTotal)}
+            </div>
+          </div>
+        </div>
+
+        <div className="h-40 flex items-end justify-between gap-2 pt-4">
+          {chartData.map((data, idx) => {
+            const heightPercent = (data.total / maxTotal) * 100;
+            return (
+              <div key={idx} className="flex flex-col items-center flex-1 gap-2 group relative">
+                {/* Tooltip */}
+                <div className="absolute -top-8 bg-[#2c2c2e] text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+                  €{data.total.toFixed(0)}
+                </div>
+                {/* Bar */}
+                <div className="w-full flex justify-center items-end h-full">
+                  <div 
+                    className="w-full max-w-[24px] bg-[#8c8dfa] rounded-sm transition-all duration-500 ease-out"
+                    style={{ height: `${Math.max(heightPercent, 4)}%` }} // min height 4% to show it exists
+                  />
+                </div>
+                {/* Labels */}
+                <div className="text-center">
+                  <div className="text-[#8e8e93] text-[10px] font-medium uppercase">{data.label.charAt(0)}</div>
+                  <div className="text-white text-xs font-semibold">{data.date}</div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
-      <Grid numItemsLg={3} className="gap-6">
-        <Card className="bg-slate-900 border-slate-800 ring-0 shadow-xl" decoration="top" decorationColor="emerald">
-          <Flex alignItems="start">
-            <div>
-              <Text className="text-slate-400 text-xs uppercase tracking-wider">Total Revenus</Text>
-              <Metric className="text-emerald-400 font-bold mt-1">{formatCurrency(totalRevenus)}</Metric>
-            </div>
-            <ArrowUpRight className="text-emerald-500" size={24} />
-          </Flex>
-        </Card>
-
-        <Card className="bg-slate-900 border-slate-800 ring-0 shadow-xl" decoration="top" decorationColor="rose">
-          <Flex alignItems="start">
-            <div>
-              <Text className="text-slate-400 text-xs uppercase tracking-wider">Total Dépenses</Text>
-              <Metric className="text-rose-400 font-bold mt-1">{formatCurrency(totalDépenses)}</Metric>
-            </div>
-            <ArrowDownLeft className="text-rose-500" size={24} />
-          </Flex>
-        </Card>
-
-        <Card className="bg-slate-900 border-slate-800 ring-0 shadow-xl" decoration="top" decorationColor="indigo">
-          <Flex alignItems="start">
-            <div>
-              <Text className="text-slate-400 text-xs uppercase tracking-wider">Transactions</Text>
-              <Metric className="text-indigo-400 font-bold mt-1">{transactions.length}</Metric>
-            </div>
-            <Calendar className="text-indigo-500" size={24} />
-          </Flex>
-        </Card>
-      </Grid>
-
-      <Card className="bg-slate-900 border-slate-800 ring-0">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <Title className="text-white">Liste des opérations</Title>
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 z-10" size={18} />
-            <TextInput
-              placeholder="Rechercher une transaction..."
-              className="pl-10 bg-slate-950 border-slate-800 text-white rounded-xl"
+      {/* Recent Transactions Section */}
+      <div className="space-y-4 pt-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-white font-semibold text-lg">Récent</h2>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#8e8e93]" size={14} />
+            <input
+              type="text"
+              placeholder="Rechercher..."
               value={searchQuery}
-              onValueChange={setSearchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="bg-[#1c1c1e] text-sm text-white rounded-full pl-8 pr-4 py-1.5 border border-white/5 focus:outline-none focus:border-[#8c8dfa]/50 transition-colors placeholder:text-[#8e8e93]/50 w-32 focus:w-48"
             />
           </div>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
-          </div>
-        ) : (
-          <Table className="mt-4">
-            <TableHead>
-              <TableRow className="border-slate-800">
-                <TableHeaderCell className="text-slate-400">Date</TableHeaderCell>
-                <TableHeaderCell className="text-slate-400">Libellé</TableHeaderCell>
-                <TableHeaderCell className="text-slate-400 text-right">Montant</TableHeaderCell>
-                <TableHeaderCell className="text-slate-400 text-center">Statut</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredTransactions.map((item) => (
-                <TableRow key={item.id} className="border-slate-800/50 hover:bg-slate-800/30 transition-colors">
-                  <TableCell className="text-slate-300 text-sm">
-                    {formatDate(item.date_real)}
-                  </TableCell>
-                  <TableCell>
-                    <Text className="text-white font-medium max-w-xs md:max-w-md truncate">
-                      {item.label}
-                    </Text>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Text className={`font-bold ${item.amount < 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                      {formatCurrency(item.amount)}
-                    </Text>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Flex justifyContent="center" className="gap-2">
-                      <Badge color={item.amount < 0 ? 'rose' : 'emerald'} className="bg-opacity-10 border-none rounded-lg text-[10px] uppercase">
-                        {item.amount < 0 ? 'Sortie' : 'Entrée'}
-                      </Badge>
-                      {item.is_advance && (
-                        <Badge color="amber" className="bg-opacity-10 border-none rounded-lg text-[10px] uppercase">
-                          Prévu
-                        </Badge>
-                      )}
-                    </Flex>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-
-        {!loading && filteredTransactions.length === 0 && (
-          <div className="text-center py-20">
-            <Text className="text-slate-500">Aucune transaction trouvée.</Text>
-          </div>
-        )}
-      </Card>
+        <div className="space-y-1">
+          {filteredTransactions.length === 0 ? (
+            <p className="text-[#8e8e93] text-sm py-4 text-center">Aucune transaction trouvée.</p>
+          ) : (
+            filteredTransactions.map((tx) => {
+              const date = formatDate(tx.date_real);
+              const isNegative = tx.amount < 0;
+              return (
+                <div key={tx.id} className="flex justify-between items-center py-3 border-b border-white/5 last:border-0 hover:bg-[#1c1c1e] px-2 -mx-2 rounded-xl transition-colors cursor-pointer group">
+                  <div className="flex items-center gap-4">
+                    {/* Date Block */}
+                    <div className="flex flex-col items-center justify-center w-10 text-center">
+                      <span className="text-[#8e8e93] text-xs font-medium uppercase">{date.monthStr}</span>
+                      <span className="text-white font-semibold text-sm">{date.dayStr}</span>
+                    </div>
+                    {/* Label & Badges */}
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium text-sm line-clamp-1">{tx.label}</span>
+                      <div className="flex gap-2 mt-0.5">
+                        {tx.is_advance && (
+                          <span className="text-[#ffd60a] text-[10px] font-semibold uppercase flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#ffd60a]"></span> Prévu
+                          </span>
+                        )}
+                        {!isNegative && !tx.is_advance && (
+                          <span className="text-[#34d399] text-[10px] font-semibold uppercase flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#34d399]"></span> Revenu
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {/* Amount */}
+                  <span className={`font-semibold text-sm ${!isNegative ? 'text-[#34d399]' : 'text-white'}`}>
+                    {isNegative ? '' : '+'}€{Math.abs(tx.amount).toFixed(2)}
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+      
     </div>
   );
 }
