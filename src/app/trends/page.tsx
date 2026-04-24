@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getTransactionsAction } from '@/app/actions/bank';
-import { Activity, ShoppingBag, Utensils, Car, Zap, MoreHorizontal, ArrowUpRight, TrendingDown } from 'lucide-react';
+import { Activity, ShoppingBag, Utensils, Car, Zap, MoreHorizontal, ArrowUpRight, TrendingDown, TrendingUp } from 'lucide-react';
 
 export default function TrendsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -35,6 +35,8 @@ export default function TrendsPage() {
     .sort((a: any, b: any) => b.total - a.total)
     .slice(0, 10);
 
+  const totalSpent = sortedMerchants.reduce((sum, m: any) => sum + m.total, 0);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center pt-32">
@@ -46,54 +48,10 @@ export default function TrendsPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 items-start w-full">
         
-        {/* Trend Insights - Sticky on Desktop */}
-        <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
-             <div className="space-y-6 relative z-10">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-accent-green">
-                        <Activity size={18} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Aperçu Analytique</span>
-                    </div>
-                </div>
-                
-                <div className="grid grid-cols-1 gap-6">
-                    <div className="space-y-1">
-                        <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépense Moyenne</span>
-                        <p className="text-3xl font-bold text-white">€34.20</p>
-                        <div className="flex items-center gap-1 text-accent-green text-[10px] font-bold">
-                            <TrendingDown size={12} />
-                            <span>↓ 4% vs mois dernier</span>
-                        </div>
-                    </div>
-                    <div className="w-full h-px bg-white/5" />
-                    <div className="space-y-1">
-                        <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Fréquence</span>
-                        <p className="text-3xl font-bold text-white">1.4 tx/j</p>
-                        <span className="text-[#444] text-[10px] font-bold uppercase tracking-widest">Rythme Stable</span>
-                    </div>
-                </div>
-             </div>
-           </div>
-
-           {/* AI Insight Placeholder */}
-           <div className="p-6 rounded-[32px] bg-accent-green/5 border border-accent-green/10 flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
-                 <Zap size={20} className="text-accent-green" />
-              </div>
-              <div className="space-y-1">
-                 <h4 className="text-white text-xs font-bold uppercase tracking-wide">Conseil Budget</h4>
-                 <p className="text-[#8e8e93] text-[11px] leading-relaxed">
-                    Tu as dépensé <span className="text-white font-bold">15% de moins</span> chez tes marchands habituels cette semaine. Continue comme ça !
-                 </p>
-              </div>
-           </div>
-        </div>
-
-        {/* Merchant Habits List */}
-        <div className="flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        {/* Merchant Habits List (Order 2 on mobile, 1 on desktop) */}
+        <div className="order-2 lg:order-1 flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
             <div className="flex justify-between items-end px-2">
                  <div className="space-y-1">
                     <h3 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.2em]">Habitudes de Consommation</h3>
@@ -119,7 +77,7 @@ export default function TrendsPage() {
                         <div className="text-right">
                             <p className="text-white text-lg font-black tracking-tight">€{m.total.toFixed(0)}</p>
                             <div className="flex items-center justify-end gap-1 text-accent-purple text-[10px] font-bold mt-1">
-                                <span>{((m.total / totalSpent) * 100).toFixed(1)}%</span>
+                                <span>{totalSpent > 0 ? ((m.total / totalSpent) * 100).toFixed(1) : 0}%</span>
                             </div>
                         </div>
                     </div>
@@ -164,11 +122,13 @@ export default function TrendsPage() {
                  <h4 className="text-[10px] font-black uppercase tracking-widest">Analyse IA</h4>
               </div>
               <p className="text-[#8e8e93] text-xs leading-relaxed font-medium">
-                Tes dépenses chez <span className="text-white font-bold">{sortedMerchants[0]?.name}</span> sont en hausse de <span className="text-accent-purple font-bold">15%</span>. 
+                Tes dépenses chez <span className="text-white font-bold">{sortedMerchants[0]?.name || 'tes marchands'}</span> sont en hausse. 
                 Pense à vérifier tes abonnements.
               </p>
            </div>
         </div>
+      </div>
+</div>
       </div>
     </div>
   );
