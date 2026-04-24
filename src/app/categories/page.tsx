@@ -89,7 +89,7 @@ export default function CategoriesPage() {
              <Plus size={16} className="text-[#8e8e93]" />
         </div>
 
-        <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8">
             {categoriesData.map((cat, idx) => {
                 const percentage = (cat.amount / totalAmount) * 100;
                 return (

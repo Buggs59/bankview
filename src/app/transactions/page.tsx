@@ -109,7 +109,7 @@ export default function TransactionsPage() {
                     </span>
                 </div>
 
-                <div className="space-y-1">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-1">
                     {data.txs.map((tx) => {
                         const txDate = new Date(tx.date_real);
                         const isSpending = tx.amount < 0;

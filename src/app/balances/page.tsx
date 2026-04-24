@@ -56,10 +56,10 @@ export default function BalancesPage() {
       </div>
 
       {/* Accounts List */}
-      <div className="space-y-6 px-2 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+      <div className="space-y-6 px-2 md:px-0 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         <div className="space-y-4">
             <h2 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest px-2">Banques & Comptes</h2>
-            <div className="space-y-2">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {bankAccounts.map((acc) => (
                 <div 
                     key={acc.id} 

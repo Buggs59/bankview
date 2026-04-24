@@ -74,7 +74,7 @@ export default function TrendsPage() {
             </button>
          </div>
 
-         <div className="space-y-2">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {sortedMerchants.map((m: any, i) => (
                 <div key={m.name} className="flex items-center gap-4 p-4 rounded-[24px] bg-card/50 hover:bg-card transition-colors border border-white/5 group">
                     <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-lg font-bold text-white shadow-inner group-hover:scale-105 transition-transform">

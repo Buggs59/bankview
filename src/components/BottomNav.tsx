@@ -16,7 +16,7 @@ export default function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 w-full flex justify-center pb-8 pt-4 px-4 bg-gradient-to-t from-black to-transparent pointer-events-none z-50">
+    <div className="fixed bottom-0 left-0 right-0 w-full flex justify-center pb-8 pt-4 px-4 bg-gradient-to-t from-black to-transparent pointer-events-none z-50 md:hidden">
       <div className="flex items-center justify-between w-full max-w-sm px-6 py-3 rounded-[32px] glass-card pointer-events-auto border border-white/10 shadow-2xl">
         {navigation.map((item) => {
           const isActive = pathname === item.href;

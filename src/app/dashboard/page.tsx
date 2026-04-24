@@ -62,7 +62,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Total Balance Section */}
-      <div className="flex flex-col items-center animate-fade-in-up">
+      <div className="flex flex-col items-center md:items-start animate-fade-in-up">
         <span className="text-[#8e8e93] text-sm font-bold uppercase tracking-[0.1em] mb-2">Tu as</span>
         <div className="flex items-baseline">
             <span className="text-3xl font-bold text-white mr-1">€</span>
@@ -74,9 +74,9 @@ export default function DashboardPage() {
       </div>
 
       {/* Accounts Mini List */}
-      <div className="space-y-3 px-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+      <div className="space-y-3 px-2 md:px-0 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
         {bankAccounts.map((acc) => (
-          <div key={acc.id} className="flex justify-between items-center group">
+          <div key={acc.id} className="flex justify-between items-center group max-w-sm">
             <span className="text-[#8e8e93] text-sm font-semibold group-hover:text-white transition-colors">
               {acc.bank_name || acc.name}
             </span>
@@ -88,7 +88,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Widgets Grid */}
-      <div className="grid grid-cols-2 gap-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         
         {/* Card 1: 7 Days Spending */}
         <Link href="/transactions" className="bg-card rounded-[32px] p-5 space-y-4 hover:bg-card-hover transition-all border border-white/5 group">
