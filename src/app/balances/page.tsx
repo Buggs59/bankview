@@ -28,7 +28,7 @@ export default function BalancesPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
         
         {/* Net Worth Summary - Sticky on Desktop */}
         <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -85,7 +85,7 @@ export default function BalancesPage() {
             </div>
 
             <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-4">
                     {bankAccounts.map((acc) => (
                     <div 
                         key={acc.id} 

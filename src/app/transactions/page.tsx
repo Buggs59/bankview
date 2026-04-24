@@ -47,9 +47,9 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-32 pt-4 px-1">
+    <div className="space-y-10 pb-32 pt-4 px-1">
       {/* Search Header */}
-      <div className="flex items-center gap-3 animate-fade-in-up max-w-2xl">
+      <div className="flex items-center gap-3 animate-fade-in-up w-full">
         <div className="relative flex-1">
             <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
             <input 
@@ -65,7 +65,7 @@ export default function TransactionsPage() {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
         
         {/* Spending Summary Chart - Sticky on Desktop */}
         <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -125,7 +125,7 @@ export default function TransactionsPage() {
                       </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-x-6 gap-y-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4">
                       {data.txs.map((tx) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;

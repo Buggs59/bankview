@@ -75,7 +75,7 @@ export default function ConfigPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
         
         {/* Right Sidebar: Add Family Form */}
         <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>

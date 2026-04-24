@@ -46,7 +46,7 @@ export default function TrendsPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
         
         {/* Trend Insights - Sticky on Desktop */}
         <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -104,7 +104,7 @@ export default function TrendsPage() {
                  </button>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
                 {sortedMerchants.map((m: any, i) => (
                     <div key={m.name} className="flex items-center gap-5 p-5 rounded-[32px] bg-card/50 hover:bg-card hover:border-white/10 transition-all border border-white/5 group active:scale-[0.98]">
                         <div className="w-16 h-16 rounded-2xl bg-card border border-white/5 flex items-center justify-center text-xl font-bold text-[#8e8e93] group-hover:text-accent-purple group-hover:border-accent-purple/30 transition-all shadow-lg">

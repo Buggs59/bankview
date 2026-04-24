@@ -46,7 +46,7 @@ export default function CategoriesPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
         
         {/* Control Panel - Sticky on Desktop */}
         <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
@@ -105,7 +105,7 @@ export default function CategoriesPage() {
                  </button>
             </div>
 
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-x-12 gap-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-x-12 gap-y-10">
                 {categoriesData.map((cat, idx) => {
                     const percentage = (cat.amount / totalAmount) * 100;
                     return (
