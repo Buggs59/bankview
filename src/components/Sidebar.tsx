@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Landmark, Activity, CreditCard, LayoutGrid, Zap } from 'lucide-react';
 
 const navigation = [
-  { name: 'Accueil', href: '/dashboard', icon: Home },
+  { name: 'Accueil', href: '/', icon: Home },
   { name: 'Soldes', href: '/balances', icon: Landmark },
   { name: 'Tendances', href: '/trends', icon: Activity },
   { name: 'Dépenses', href: '/transactions', icon: CreditCard },
