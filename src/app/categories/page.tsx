@@ -57,32 +57,42 @@ export default function CategoriesPage() {
                  </button>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-x-12 gap-y-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-2 gap-8">
                 {categoriesData.map((cat, idx) => {
                     const percentage = (cat.amount / totalAmount) * 100;
+                    const Icon = cat.icon;
                     return (
-                        <div key={cat.name} className="space-y-4 group">
-                            <div className="flex justify-between items-end px-1">
-                                <div className="space-y-1">
-                                    <h4 className="text-white text-base font-bold flex items-center gap-2">
-                                        <div className="w-2 h-2 rounded-full" style={{ backgroundColor: cat.color }} />
-                                        {cat.name}
-                                    </h4>
-                                    <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-wider">{percentage.toFixed(1)}% DU BUDGET</p>
+                        <div key={cat.name} className="bg-card/40 backdrop-blur-sm p-8 rounded-[40px] border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden">
+                            <div className="absolute -right-10 -top-10 w-32 h-32 opacity-10 blur-3xl rounded-full" style={{ backgroundColor: cat.color }} />
+                            
+                            <div className="flex items-start justify-between relative z-10">
+                                <div className="flex items-center gap-5">
+                                    <div className="w-16 h-16 rounded-[24px] bg-black/40 border border-white/5 flex items-center justify-center group-hover:scale-110 transition-transform duration-500 shadow-xl">
+                                        <Icon size={28} style={{ color: cat.color }} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <h4 className="text-white text-xl font-bold tracking-tight">{cat.name}</h4>
+                                        <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest opacity-60">
+                                            {percentage.toFixed(1)}% du total
+                                        </p>
+                                    </div>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-white text-lg font-black tracking-tight">€{cat.amount.toFixed(2)}</p>
+                                    <p className="text-white text-2xl font-black tracking-tighter">€{cat.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}</p>
                                 </div>
                             </div>
-                            <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-                                <div 
-                                    className="h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(255,255,255,0.1)]"
-                                    style={{ 
-                                        width: `${percentage}%`,
-                                        backgroundColor: cat.color,
-                                        boxShadow: `0 0 15px ${cat.color}44`
-                                    }}
-                                />
+
+                            <div className="mt-8 space-y-3">
+                                <div className="h-2.5 w-full bg-black/40 rounded-full overflow-hidden p-[2px] border border-white/5">
+                                    <div 
+                                        className="h-full rounded-full transition-all duration-1000 ease-premium shadow-[0_0_15px_rgba(255,255,255,0.05)]"
+                                        style={{ 
+                                            width: `${percentage}%`,
+                                            backgroundColor: cat.color,
+                                            boxShadow: `0 0 20px ${cat.color}33`
+                                        }}
+                                    />
+                                </div>
                             </div>
                         </div>
                     );
