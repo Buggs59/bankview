@@ -15,7 +15,7 @@ export default function BalancesPage() {
     });
   }, []);
 
-  const totalBalance = bankAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+  const totalBalance: number = bankAccounts.reduce((sum: number, acc: any) => sum + (acc.balance || 0), 0);
 
   if (loading) {
     return (

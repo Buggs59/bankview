@@ -34,7 +34,7 @@ export default function CategoriesPage() {
     return Object.values(cats).sort((a, b) => b.amount - a.amount);
   }, [transactions, mode]);
 
-  const totalAmount = categoriesData.reduce((sum, c) => sum + c.amount, 0);
+  const totalAmount: number = categoriesData.reduce((sum: number, c: any) => sum + (c.amount || 0), 0);
 
   if (loading) {
     return (

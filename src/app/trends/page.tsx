@@ -16,7 +16,7 @@ export default function TrendsPage() {
   }, []);
 
   // Group by merchant (simplified label logic)
-  const merchants = transactions.reduce((acc: any, tx) => {
+  const merchants = transactions.reduce((acc: Record<string, any>, tx: any) => {
     if (tx.amount >= 0) return acc; // Only spending
     
     // Simple cleaning for common merchants
@@ -35,7 +35,7 @@ export default function TrendsPage() {
     .sort((a: any, b: any) => b.total - a.total)
     .slice(0, 10);
 
-  const totalSpent = sortedMerchants.reduce((sum, m: any) => sum + m.total, 0);
+  const totalSpent: number = sortedMerchants.reduce((sum: number, m: any) => sum + (m.total || 0), 0);
 
   if (loading) {
     return (
