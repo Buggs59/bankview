@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Landmark, Activity, CreditCard, LayoutGrid, Zap } from 'lucide-react';
+import { Home, Landmark, Activity, CreditCard, LayoutGrid, Zap, Settings } from 'lucide-react';
 
 const navigation = [
   { name: 'Accueil', href: '/', icon: Home },
@@ -10,6 +10,7 @@ const navigation = [
   { name: 'Tendances', href: '/trends', icon: Activity },
   { name: 'Dépenses', href: '/transactions', icon: CreditCard },
   { name: 'Catégories', href: '/categories', icon: LayoutGrid },
+  { name: 'Configuration', href: '/config', icon: Settings },
 ];
 
 export default function Sidebar() {
