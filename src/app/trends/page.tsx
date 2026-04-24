@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getTransactionsAction } from '@/app/actions/bank';
-import { Activity, ShoppingBag, Utensils, Car, Zap, MoreHorizontal, ArrowUpRight } from 'lucide-react';
+import { Activity, ShoppingBag, Utensils, Car, Zap, MoreHorizontal, ArrowUpRight, TrendingDown } from 'lucide-react';
 
 export default function TrendsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -44,56 +44,93 @@ export default function TrendsPage() {
   }
 
   return (
-    <div className="space-y-8 pb-24">
-      {/* Header */}
-      <div className="pt-8 px-2 animate-fade-in-up">
-        <h1 className="text-3xl font-bold text-white mb-1">Tendances</h1>
-        <p className="text-[#8e8e93] text-sm font-medium">Où va ton argent ?</p>
-      </div>
-
-      {/* Main Stats */}
-      <div className="grid grid-cols-2 gap-4 px-2 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-         <div className="bg-card rounded-[32px] p-5 border border-white/5 space-y-1">
-            <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépense Moyenne</span>
-            <p className="text-2xl font-bold text-white">€34.20</p>
-            <span className="text-accent-green text-[10px] font-bold">↓ 4% vs mois dernier</span>
-         </div>
-         <div className="bg-card rounded-[32px] p-5 border border-white/5 space-y-1">
-            <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Fréquence</span>
-            <p className="text-2xl font-bold text-white">1.4 tx/j</p>
-            <span className="text-[#8e8e93] text-[10px] font-bold">Stable</span>
-         </div>
-      </div>
-
-      {/* Merchant List */}
-      <div className="space-y-4 px-2 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-         <div className="flex justify-between items-end px-2">
-            <h2 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Top Marchands</h2>
-            <button className="text-accent-purple text-[10px] font-black uppercase tracking-widest flex items-center gap-1">
-                Tout voir <MoreHorizontal size={12} />
-            </button>
-         </div>
-
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {sortedMerchants.map((m: any, i) => (
-                <div key={m.name} className="flex items-center gap-4 p-4 rounded-[24px] bg-card/50 hover:bg-card transition-colors border border-white/5 group">
-                    <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-lg font-bold text-white shadow-inner group-hover:scale-105 transition-transform">
-                        {m.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <h3 className="text-white text-sm font-bold truncate">{m.name}</h3>
-                        <p className="text-[#8e8e93] text-xs font-medium">{m.count} achats ce mois</p>
-                    </div>
-                    <div className="text-right">
-                        <p className="text-white text-sm font-bold">€{m.total.toFixed(0)}</p>
-                        <div className="flex items-center justify-end gap-1 text-accent-purple">
-                            <span className="text-[10px] font-black uppercase">Habitude</span>
-                            <ArrowUpRight size={10} />
-                        </div>
+    <div className="space-y-8 pb-32 pt-4 px-1">
+      
+      <div className="flex flex-col lg:flex-row-reverse gap-12 items-start">
+        
+        {/* Trend Insights - Sticky on Desktop */}
+        <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
+             <div className="space-y-6 relative z-10">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-accent-green">
+                        <Activity size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Aperçu Analytique</span>
                     </div>
                 </div>
-            ))}
-         </div>
+                
+                <div className="grid grid-cols-1 gap-6">
+                    <div className="space-y-1">
+                        <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépense Moyenne</span>
+                        <p className="text-3xl font-bold text-white">€34.20</p>
+                        <div className="flex items-center gap-1 text-accent-green text-[10px] font-bold">
+                            <TrendingDown size={12} />
+                            <span>↓ 4% vs mois dernier</span>
+                        </div>
+                    </div>
+                    <div className="w-full h-px bg-white/5" />
+                    <div className="space-y-1">
+                        <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Fréquence</span>
+                        <p className="text-3xl font-bold text-white">1.4 tx/j</p>
+                        <span className="text-[#444] text-[10px] font-bold uppercase tracking-widest">Rythme Stable</span>
+                    </div>
+                </div>
+             </div>
+           </div>
+
+           {/* AI Insight Placeholder */}
+           <div className="p-6 rounded-[32px] bg-accent-green/5 border border-accent-green/10 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+                 <Zap size={20} className="text-accent-green" />
+              </div>
+              <div className="space-y-1">
+                 <h4 className="text-white text-xs font-bold uppercase tracking-wide">Conseil Budget</h4>
+                 <p className="text-[#8e8e93] text-[11px] leading-relaxed">
+                    Tu as dépensé <span className="text-white font-bold">15% de moins</span> chez tes marchands habituels cette semaine. Continue comme ça !
+                 </p>
+              </div>
+           </div>
+        </div>
+
+        {/* Merchant Habits List */}
+        <div className="flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <div className="flex justify-between items-end px-2">
+                 <div className="space-y-1">
+                    <h3 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.2em]">Habitudes de Consommation</h3>
+                    <h2 className="text-3xl font-bold text-white tracking-tight">Top Marchands</h2>
+                 </div>
+                 <button className="text-accent-purple text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-white/5 px-4 py-2 rounded-full transition-all">
+                    Tout voir <MoreHorizontal size={14} />
+                 </button>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                {sortedMerchants.map((m: any, i) => (
+                    <div key={m.name} className="flex items-center gap-5 p-5 rounded-[32px] bg-card/50 hover:bg-card hover:border-white/10 transition-all border border-white/5 group active:scale-[0.98]">
+                        <div className="w-16 h-16 rounded-2xl bg-card border border-white/5 flex items-center justify-center text-xl font-bold text-[#8e8e93] group-hover:text-accent-purple group-hover:border-accent-purple/30 transition-all shadow-lg">
+                            {m.name.charAt(0)}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h3 className="text-white text-base font-bold truncate group-hover:text-accent-purple transition-colors">{m.name}</h3>
+                            <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[#444] text-[10px] font-black uppercase tracking-wider">{m.count} transactions</span>
+                                <div className="w-1 h-1 rounded-full bg-[#444]" />
+                                <span className="text-[#8e8e93] text-[10px] font-bold uppercase tracking-wide">
+                                    {m.category?.name || 'Général'}
+                                </span>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-white text-lg font-black tracking-tight">€{m.total.toFixed(0)}</p>
+                            <div className="flex items-center justify-end gap-1.5 text-accent-purple mt-1">
+                                <span className="text-[9px] font-black uppercase tracking-tighter">Habitude</span>
+                                <ArrowUpRight size={12} />
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
       </div>
     </div>
   );
