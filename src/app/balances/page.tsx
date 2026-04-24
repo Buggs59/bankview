@@ -28,57 +28,10 @@ export default function BalancesPage() {
   return (
     <div className="space-y-8 pb-32 pt-4 px-1">
       
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 items-start w-full">
         
-        {/* Net Worth Summary - Sticky on Desktop */}
-        <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
-             {/* Background glow */}
-             <div className="absolute -right-10 -top-10 w-40 h-40 bg-accent-purple/10 blur-[80px] rounded-full" />
-             
-             <div className="space-y-6 relative z-10">
-                <div className="flex justify-between items-center">
-                    <div className="flex items-center gap-2 text-accent-purple">
-                        <ShieldCheck size={18} />
-                        <span className="text-[10px] font-black uppercase tracking-widest">Patrimoine Net</span>
-                    </div>
-                    <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[9px] font-black rounded-full border border-accent-green/20">
-                        STABLE
-                    </div>
-                </div>
-                
-                <div className="space-y-2">
-                    <h2 className="text-5xl font-bold text-white tracking-tight">
-                        €{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(Math.floor(totalBalance))}
-                        <span className="text-2xl text-[#444]">.{(totalBalance % 1).toFixed(2).split('.')[1]}</span>
-                    </h2>
-                    <div className="flex items-center gap-2 text-[#8e8e93] text-xs font-semibold">
-                        <div className="flex items-center gap-1 text-accent-green">
-                            <TrendingUp size={14} />
-                            <span>+2.4%</span>
-                        </div>
-                        <span className="opacity-40">vs mois dernier</span>
-                    </div>
-                </div>
-             </div>
-           </div>
-
-           {/* Security Info */}
-           <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 flex items-start gap-4">
-              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
-                 <ShieldCheck size={20} className="text-[#8e8e93]" />
-              </div>
-              <div className="space-y-1">
-                 <h4 className="text-white text-xs font-bold uppercase tracking-wide">Comptes Protégés</h4>
-                 <p className="text-[#8e8e93] text-[11px] leading-relaxed">
-                    Tes données sont synchronisées via Enable Banking avec un chiffrement de bout en bout.
-                 </p>
-              </div>
-           </div>
-        </div>
-
-        {/* Accounts List */}
-        <div className="flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+        {/* Accounts List (Order 2 on mobile, 1 on desktop) */}
+        <div className="order-2 lg:order-1 flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
             <div className="flex justify-between items-center px-2">
                  <h3 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.2em]">Mes Comptes</h3>
                  <button className="text-accent-purple text-xs font-bold hover:underline">Gérer</button>
@@ -124,6 +77,53 @@ export default function BalancesPage() {
                     </div>
                 </div>
             </div>
+        </div>
+
+        {/* Net Worth Summary - Sticky on Desktop (Order 1 on mobile, 2 on desktop) */}
+        <div className="order-1 lg:order-2 w-full lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
+             {/* Background glow */}
+             <div className="absolute -right-10 -top-10 w-40 h-40 bg-accent-purple/10 blur-[80px] rounded-full" />
+             
+             <div className="space-y-6 relative z-10">
+                <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2 text-accent-purple">
+                        <ShieldCheck size={18} />
+                        <span className="text-[10px] font-black uppercase tracking-widest">Patrimoine Net</span>
+                    </div>
+                    <div className="px-2 py-0.5 bg-accent-green/10 text-accent-green text-[9px] font-black rounded-full border border-accent-green/20">
+                        STABLE
+                    </div>
+                </div>
+                
+                <div className="space-y-2">
+                    <h2 className="text-5xl font-bold text-white tracking-tight">
+                        €{new Intl.NumberFormat('fr-FR', { minimumFractionDigits: 0 }).format(Math.floor(totalBalance))}
+                        <span className="text-2xl text-[#444]">.{(totalBalance % 1).toFixed(2).split('.')[1]}</span>
+                    </h2>
+                    <div className="flex items-center gap-2 text-[#8e8e93] text-xs font-semibold">
+                        <div className="flex items-center gap-1 text-accent-green">
+                            <TrendingUp size={14} />
+                            <span>+2.4%</span>
+                        </div>
+                        <span className="opacity-40">vs mois dernier</span>
+                    </div>
+                </div>
+             </div>
+           </div>
+
+           {/* Security Info */}
+           <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 flex items-start gap-4">
+              <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center shrink-0">
+                 <ShieldCheck size={20} className="text-[#8e8e93]" />
+              </div>
+              <div className="space-y-1">
+                 <h4 className="text-white text-xs font-bold uppercase tracking-wide">Comptes Protégés</h4>
+                 <p className="text-[#8e8e93] text-[11px] leading-relaxed">
+                    Tes données sont synchronisées via Enable Banking avec un chiffrement de bout en bout.
+                 </p>
+              </div>
+           </div>
         </div>
       </div>
     </div>

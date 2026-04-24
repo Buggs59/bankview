@@ -65,57 +65,10 @@ export default function TransactionsPage() {
         </button>
       </div>
 
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-12 items-start w-full">
         
-        {/* Spending Summary Chart - Sticky on Desktop */}
-        <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl">
-              <div className="flex justify-between items-end">
-                  <div>
-                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépenses Semaine</span>
-                      <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-4xl font-bold text-white">€865</span>
-                          <span className="text-accent-green text-xs font-bold bg-accent-green/10 px-1.5 rounded flex items-center gap-0.5">
-                              <ArrowDown size={10} /> 12%
-                          </span>
-                      </div>
-                  </div>
-                  <div className="text-right">
-                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Moyenne</span>
-                      <p className="text-xl font-bold text-white mt-1">€124</p>
-                  </div>
-              </div>
-
-              <div className="h-44 flex items-end justify-between gap-2 px-1">
-                  {[40, 65, 100, 75, 50, 45, 40].map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full justify-end group">
-                          <div 
-                              className={`w-full rounded-xl transition-all duration-700 ease-premium ${i === 2 ? 'bg-accent-purple shadow-[0_0_20px_rgba(140,141,250,0.4)]' : 'bg-white/5 group-hover:bg-white/10'}`} 
-                              style={{ height: `${h}%` }} 
-                          />
-                          <span className="text-[#444] text-[10px] font-black uppercase tracking-tighter">
-                              {['S','D','L','M','M','J','V'][i]}
-                          </span>
-                      </div>
-                  ))}
-              </div>
-           </div>
-
-           {/* Quick Filter or Legend */}
-           <div className="grid grid-cols-2 gap-3 px-2">
-              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
-                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Plus gros poste</span>
-                  <p className="text-sm font-bold text-white">Loyer</p>
-              </div>
-              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
-                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Fréquence</span>
-                  <p className="text-sm font-bold text-white">Quotidienne</p>
-              </div>
-           </div>
-        </div>
-
-        {/* List grouped by month */}
-        <div className="flex-1 space-y-12 w-full">
+        {/* Main Content: Transactions List (Order 2 on mobile, 1 on desktop) */}
+        <div className="order-2 lg:order-1 flex-1 space-y-12 w-full">
           {Object.entries(groupedTx).map(([month, data], mIdx) => (
               <div key={month} className="space-y-6 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 2) * 100}ms` }}>
                   <div className="flex justify-between items-baseline px-2 sticky top-0 bg-[#050505]/90 backdrop-blur-xl py-4 z-10 border-b border-white/5">
@@ -165,6 +118,53 @@ export default function TransactionsPage() {
                   </div>
               </div>
           ))}
+        </div>
+
+        {/* Spending Summary Chart - Order 1 on mobile, 2 on desktop */}
+        <div className="order-1 lg:order-2 w-full lg:sticky lg:top-8 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl">
+              <div className="flex justify-between items-end">
+                  <div>
+                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépenses Semaine</span>
+                      <div className="flex items-baseline gap-2 mt-1">
+                          <span className="text-4xl font-bold text-white">€865</span>
+                          <span className="text-accent-green text-xs font-bold bg-accent-green/10 px-1.5 rounded flex items-center gap-0.5">
+                              <ArrowDown size={10} /> 12%
+                          </span>
+                      </div>
+                  </div>
+                  <div className="text-right">
+                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Moyenne</span>
+                      <p className="text-xl font-bold text-white mt-1">€124</p>
+                  </div>
+              </div>
+
+              <div className="h-44 flex items-end justify-between gap-2 px-1">
+                  {[40, 65, 100, 75, 50, 45, 40].map((h, i) => (
+                      <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full justify-end group">
+                          <div 
+                              className={`w-full rounded-xl transition-all duration-700 ease-premium ${i === 2 ? 'bg-accent-purple shadow-[0_0_20px_rgba(140,141,250,0.4)]' : 'bg-white/5 group-hover:bg-white/10'}`} 
+                              style={{ height: `${h}%` }} 
+                          />
+                          <span className="text-[#444] text-[10px] font-black uppercase tracking-tighter">
+                              {['S','D','L','M','M','J','V'][i]}
+                          </span>
+                      </div>
+                  ))}
+              </div>
+           </div>
+
+           {/* Quick Filter or Legend */}
+           <div className="grid grid-cols-2 gap-3 px-2">
+              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
+                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Plus gros poste</span>
+                  <p className="text-sm font-bold text-white">Loyer</p>
+              </div>
+              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
+                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Fréquence</span>
+                  <p className="text-sm font-bold text-white">Quotidienne</p>
+              </div>
+           </div>
         </div>
       </div>
     </div>

@@ -112,24 +112,62 @@ export default function TrendsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <h3 className="text-white text-base font-bold truncate group-hover:text-accent-purple transition-colors">{m.name}</h3>
-                            <div className="flex items-center gap-2 mt-0.5">
-                                <span className="text-[#444] text-[10px] font-black uppercase tracking-wider">{m.count} transactions</span>
-                                <div className="w-1 h-1 rounded-full bg-[#444]" />
-                                <span className="text-[#8e8e93] text-[10px] font-bold uppercase tracking-wide">
-                                    {m.category?.name || 'Général'}
-                                </span>
+                            <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">{m.count} transactions</span>
                             </div>
                         </div>
                         <div className="text-right">
                             <p className="text-white text-lg font-black tracking-tight">€{m.total.toFixed(0)}</p>
-                            <div className="flex items-center justify-end gap-1.5 text-accent-purple mt-1">
-                                <span className="text-[9px] font-black uppercase tracking-tighter">Habitude</span>
-                                <ArrowUpRight size={12} />
+                            <div className="flex items-center justify-end gap-1 text-accent-purple text-[10px] font-bold mt-1">
+                                <span>{((m.total / totalSpent) * 100).toFixed(1)}%</span>
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
+        </div>
+
+        {/* Sidebar: Trend Insights (Order 1 on mobile, 2 on desktop) */}
+        <div className="order-1 lg:order-2 w-full lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
+              <div className="absolute -right-10 -top-10 w-40 h-40 bg-accent-purple/10 blur-[80px] rounded-full" />
+              
+              <div className="space-y-6 relative z-10">
+                 <div className="flex justify-between items-center">
+                    <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Évolution Mensuelle</span>
+                    <div className="px-2 py-0.5 bg-accent-purple/10 text-accent-purple text-[9px] font-black rounded-full border border-accent-purple/20 uppercase tracking-widest">
+                        Focus
+                    </div>
+                 </div>
+                 
+                 <div className="space-y-2 text-center py-4">
+                    <h2 className="text-5xl font-bold text-white tracking-tight">€{totalSpent.toFixed(0)}</h2>
+                    <p className="text-[#8e8e93] text-xs font-semibold">Dépenses totales analysées</p>
+                 </div>
+
+                 <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-full w-2/3 bg-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.4)] rounded-full transition-all duration-1000" />
+                 </div>
+
+                 <div className="flex justify-between text-[10px] font-black text-[#444] uppercase tracking-widest px-1">
+                    <span>Mars</span>
+                    <span className="text-white">Avril</span>
+                    <span>Mai</span>
+                 </div>
+              </div>
+           </div>
+
+           {/* AI Insight Card */}
+           <div className="p-8 rounded-[40px] bg-gradient-to-br from-white/5 to-transparent border border-white/5 space-y-4">
+              <div className="flex items-center gap-3 text-accent-purple">
+                 <TrendingUp size={20} />
+                 <h4 className="text-[10px] font-black uppercase tracking-widest">Analyse IA</h4>
+              </div>
+              <p className="text-[#8e8e93] text-xs leading-relaxed font-medium">
+                Tes dépenses chez <span className="text-white font-bold">{sortedMerchants[0]?.name}</span> sont en hausse de <span className="text-accent-purple font-bold">15%</span>. 
+                Pense à vérifier tes abonnements.
+              </p>
+           </div>
         </div>
       </div>
     </div>
