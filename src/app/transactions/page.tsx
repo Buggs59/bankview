@@ -78,17 +78,17 @@ export default function TransactionsPage() {
                       </span>
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-x-6 gap-y-4">
+                  <div className="space-y-2">
                       {data.txs.map((tx) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
                           return (
-                              <div key={tx.id} className="flex items-center gap-4 p-4 rounded-[32px] hover:bg-card/50 transition-all group active:scale-[0.98] border border-transparent hover:border-white/5">
-                                  <div className="w-14 h-14 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center group-hover:border-accent-purple/30 transition-colors shadow-lg">
-                                      <span className="text-[9px] text-[#8e8e93] font-black uppercase mb-0.5">
+                              <div key={tx.id} className="flex items-center gap-6 p-4 rounded-[28px] hover:bg-white/[0.03] transition-all group active:scale-[0.99] border border-transparent hover:border-white/5">
+                                  <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
+                                      <span className="text-[8px] text-[#8e8e93] font-black uppercase mb-0.5">
                                           {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
                                       </span>
-                                      <span className="text-lg text-white font-bold leading-none">
+                                      <span className="text-base text-white font-bold leading-none">
                                           {txDate.getDate()}
                                       </span>
                                   </div>
@@ -107,9 +107,9 @@ export default function TransactionsPage() {
                                           )}
                                       </div>
                                   </div>
-                                  <div className="text-right">
+                                  <div className="text-right shrink-0">
                                       <p className={`text-base font-black ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
-                                          {isSpending ? '' : '+'}{Math.abs(tx.amount).toFixed(2)}€
+                                          {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
                                       </p>
                                   </div>
                               </div>
