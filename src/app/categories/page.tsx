@@ -20,12 +20,13 @@ export default function CategoriesPage() {
     const isSpending = mode === 'Spent';
     const filtered = transactions.filter(tx => isSpending ? tx.amount < 0 : tx.amount > 0);
     
-    const cats: { [key: string]: { name: string, amount: number, icon: any } } = {};
+    const cats: { [key: string]: { name: string, amount: number, icon: any, color: string } } = {};
     
     filtered.forEach(tx => {
         const name = tx.category?.name || 'Général';
         if (!cats[name]) {
-            cats[name] = { name, amount: 0, icon: name === 'Courses' ? ShoppingCart : name === 'Loisirs' ? Heart : name === 'Logement' ? Home : name === 'Salaire' ? Briefcase : MoreHorizontal };
+            const color = name === 'Courses' ? '#8C8DFA' : name === 'Loisirs' ? '#34D399' : name === 'Logement' ? '#FBBF24' : name === 'Salaire' ? '#34D399' : '#8e8e93';
+            cats[name] = { name, amount: 0, icon: name === 'Courses' ? ShoppingCart : name === 'Loisirs' ? Heart : name === 'Logement' ? Home : name === 'Salaire' ? Briefcase : MoreHorizontal, color };
         }
         cats[name].amount += Math.abs(tx.amount);
     });
