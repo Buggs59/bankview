@@ -46,7 +46,6 @@ export default function TrendsPage() {
   }
 
   return (
-  return (
     <div className="space-y-12 pb-32 pt-4">
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-16 items-start w-full">
         
