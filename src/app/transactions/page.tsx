@@ -16,15 +16,25 @@ export default function TransactionsPage() {
     });
   }, []);
 
-  const filteredTransactions = useMemo(() => 
-    transactions.filter(tx => 
+  const advanceTransactions = useMemo(() => 
+    transactions.filter(tx => tx.is_advance).sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime()),
+    [transactions]
+  );
+
+  const regularTransactions = useMemo(() => 
+    transactions.filter(tx => !tx.is_advance),
+    [transactions]
+  );
+
+  const filteredRegularTransactions = useMemo(() => 
+    regularTransactions.filter(tx => 
         (tx.label || '').toLowerCase().includes(searchQuery.toLowerCase())
-    ), [transactions, searchQuery]
+    ), [regularTransactions, searchQuery]
   );
 
   const groupedTx = useMemo(() => {
     const groups: { [key: string]: { txs: any[], total: number } } = {};
-    filteredTransactions.forEach(tx => {
+    filteredRegularTransactions.forEach(tx => {
       const date = new Date(tx.date_real);
       const monthYear = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
       const capitalizedMonth = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
@@ -36,7 +46,7 @@ export default function TransactionsPage() {
       groups[capitalizedMonth].total += tx.amount;
     });
     return groups;
-  }, [filteredTransactions]);
+  }, [filteredRegularTransactions]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -103,6 +113,59 @@ export default function TransactionsPage() {
                 <Filter size={20} />
             </button>
           </div>
+
+          {/* Advance / Pending Section */}
+          {advanceTransactions.length > 0 && !searchQuery && (
+              <div className="space-y-8 animate-fade-in-up">
+                  <div className="flex justify-between items-end px-4 pb-5 border-b border-white/5">
+                      <div className="space-y-1">
+                        <span className="text-accent-yellow text-[10px] font-black uppercase tracking-[0.2em]">Flux futurs</span>
+                        <h2 className="text-3xl font-bold text-white tracking-tight">À venir</h2>
+                      </div>
+                      <span className="text-sm font-black text-[#8e8e93] uppercase tracking-[0.2em]">
+                          {advanceTransactions.length} OPÉRATION{advanceTransactions.length > 1 ? 'S' : ''}
+                      </span>
+                  </div>
+
+                  <div className="space-y-2">
+                      {advanceTransactions.map((tx) => {
+                          const txDate = new Date(tx.date_real);
+                          const isSpending = tx.amount < 0;
+                          return (
+                              <div key={tx.id} className="flex items-center gap-6 p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
+                                  <div className="w-12 h-12 rounded-2xl bg-card border border-accent-yellow/20 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-yellow transition-colors shadow-sm relative overflow-hidden">
+                                      <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />
+                                      <span className="text-[8px] text-accent-yellow font-black uppercase tracking-widest relative z-10">
+                                          {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
+                                      </span>
+                                      <span className="text-base text-white font-bold leading-none relative z-10">
+                                          {txDate.getDate()}
+                                      </span>
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                      <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
+                                          {tx.label}
+                                      </h4>
+                                      <div className="flex items-center gap-3 mt-1">
+                                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
+                                              {tx.category?.name || 'Général'}
+                                          </span>
+                                          <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
+                                              PRÉVU
+                                          </span>
+                                      </div>
+                                  </div>
+                                  <div className="text-right shrink-0 min-w-[120px]">
+                                      <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                                          {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                                      </p>
+                                  </div>
+                              </div>
+                          );
+                      })}
+                  </div>
+              </div>
+          )}
 
           {Object.entries(groupedTx).map(([month, data], mIdx) => (
               <div key={month} className="space-y-8 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 1) * 50}ms` }}>

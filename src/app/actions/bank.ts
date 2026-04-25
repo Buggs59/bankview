@@ -133,31 +133,35 @@ export async function syncTransactionsAction() {
               console.log("DATELESS TRANSACTION DETECTED:", JSON.stringify(tx));
             }
 
-            const dateVal = tx.booking_date || tx.bookingDate || 
-                           tx.value_date || tx.valueDate || 
-                           tx.transaction_date || tx.transactionDate || 
-                           tx.requested_execution_date || tx.requestedExecutionDate ||
-                           tx.expected_booking_date || tx.expectedBookingDate ||
-                           tx.expected_value_date || tx.expectedValueDate ||
-                           new Date().toISOString().split('T')[0];
-
-            const idVal = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference || `${acc.id}-${dateVal}-${amountNum}-${labelVal.substring(0, 20)}`;
-
             // 3. Détection des transactions futures/en attente (is_advance)
-            const status = tx.status || tx.transaction_status || tx.transactionStatus || tx.entry_status || tx.entryStatus || 'BOOK';
+            const status = (tx.status || tx.transaction_status || tx.transactionStatus || tx.entry_status || tx.entryStatus || 'BOOK').toUpperCase();
             
             const hasNoDates = !tx.booking_date && !tx.bookingDate && !tx.value_date && !tx.valueDate && !tx.transaction_date && !tx.transactionDate;
-            const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'Pending' || status === 'OTHR') || 
+            
+            // Priorité aux dates d'exécution pour les "prévus"
+            const futureDates = tx.requested_execution_date || tx.requestedExecutionDate ||
+                               tx.expected_booking_date || tx.expectedBookingDate ||
+                               tx.expected_value_date || tx.expectedValueDate;
+
+            const pastDates = tx.booking_date || tx.bookingDate || 
+                             tx.value_date || tx.valueDate || 
+                             tx.transaction_date || tx.transactionDate;
+
+            const isAdvance = (status === 'PDNG' || status === 'PEND' || status === 'OTHR') || 
                              hasNoDates || 
-                             (new Date(dateVal) > new Date());
+                             (futureDates && new Date(futureDates) > new Date());
+
+            const dateValFinal = isAdvance ? (futureDates || pastDates || new Date().toISOString().split('T')[0]) : (pastDates || futureDates || new Date().toISOString().split('T')[0]);
+
+            const idValFinal = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference || `${acc.id}-${dateValFinal}-${amountNum}-${labelVal.substring(0, 20)}`;
 
             return {
               user_id: user.id,
               amount: amountNum,
               label: labelVal,
-              date_real: dateVal,
-              bank_id: idVal,
-              accounting_period: dateVal.substring(0, 7),
+              date_real: dateValFinal,
+              bank_id: idValFinal,
+              accounting_period: dateValFinal.substring(0, 7),
               is_advance: isAdvance,
               raw_data: tx,
               mcc: tx.merchant_category_code || tx.merchantCategoryCode || null,
@@ -166,9 +170,20 @@ export async function syncTransactionsAction() {
             };
           });
 
+          // Déduplication locale pour les "prévus" (souvent renvoyés plusieurs fois par jour par les banques)
+          const seen = new Set();
+          const uniqueTransactions = transactionsToInsert.filter((tx: any) => {
+            if (tx.is_advance) {
+              const key = `${tx.label}-${tx.amount}`; // Pour les prévus, on n'en garde qu'un seul par libellé/montant dans ce sync
+              if (seen.has(key)) return false;
+              seen.add(key);
+            }
+            return true;
+          });
+
           const { error: txError } = await supabase
             .from('transactions')
-            .upsert(transactionsToInsert, { onConflict: 'bank_id' });
+            .upsert(uniqueTransactions, { onConflict: 'bank_id' });
 
           if (txError) {
             console.error(`Erreur insertion transactions pour compte ${acc.id}:`, txError);
