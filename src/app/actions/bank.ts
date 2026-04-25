@@ -29,6 +29,11 @@ export async function syncTransactionsAction() {
     }
 
     console.log(`${accounts.length} comptes trouvés pour synchronisation.`);
+    
+    // 2.5 Nettoyer les transactions "prévues" (is_advance) existantes
+    // car elles sont temporaires et peuvent créer des doublons si leur ID change 
+    // ou si elles passent au statut BOOKED avec un ID réel.
+    await supabase.from('transactions').delete().eq('user_id', user.id).eq('is_advance', true);
 
     let totalImported = 0;
     const rangeInDays = 729; // Récupérer 2 ans d'historique si possible
