@@ -151,9 +151,37 @@ export async function syncTransactionsAction() {
                              hasNoDates || 
                              (futureDates && new Date(futureDates) > new Date());
 
-            const dateValFinal = isAdvance ? (futureDates || pastDates || new Date().toISOString().split('T')[0]) : (pastDates || futureDates || new Date().toISOString().split('T')[0]);
+            // Recherche exhaustive de la meilleure date
+            const allDateFields = [
+              tx.requested_execution_date, tx.requestedExecutionDate,
+              tx.expected_booking_date, tx.expectedBookingDate,
+              tx.expected_value_date, tx.expectedValueDate,
+              tx.booking_date, tx.bookingDate,
+              tx.value_date, tx.valueDate,
+              tx.transaction_date, tx.transactionDate,
+              tx.creation_date_time, tx.creationDateTime,
+              tx.status_updated_date_time, tx.statusUpdatedDateTime
+            ].filter(d => d && d.length >= 10);
 
-            const idValFinal = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference || `${acc.id}-${dateValFinal}-${amountNum}-${labelVal.substring(0, 20)}`;
+            // Pour les "prévus", on cherche la date la plus lointaine dans le futur
+            // Pour les "réels", on cherche la date de booking/transaction
+            let dateValFinal = new Date().toISOString().split('T')[0];
+            if (allDateFields.length > 0) {
+              if (isAdvance) {
+                // Trier par date descendante pour prendre la plus lointaine
+                const sortedDates = allDateFields.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+                dateValFinal = sortedDates[0].substring(0, 10);
+              } else {
+                // Pour les transactions réelles, on préfère la date de booking si dispo
+                dateValFinal = (tx.booking_date || tx.bookingDate || allDateFields[0]).substring(0, 10);
+              }
+            }
+
+            // STABILISATION DE L'ID pour les "prévus"
+            // Si la banque ne donne pas d'ID stable, on en génère un SANS la date du jour
+            // pour qu'il soit écrasé (upsert) ou dédupliqué correctement.
+            const bankId = tx.transaction_id || tx.transactionId || tx.id || tx.entry_reference || tx.entryReference;
+            const idValFinal = bankId || `${acc.id}-ADV-${Math.round(amountNum * 100)}-${labelVal.trim().toUpperCase().substring(0, 30)}`;
 
             return {
               user_id: user.id,
@@ -174,7 +202,8 @@ export async function syncTransactionsAction() {
           const seen = new Set();
           const uniqueTransactions = transactionsToInsert.filter((tx: any) => {
             if (tx.is_advance) {
-              const key = `${tx.label}-${tx.amount}`; // Pour les prévus, on n'en garde qu'un seul par libellé/montant dans ce sync
+              // Clé de déduplication robuste : libellé nettoyé + montant exact
+              const key = `${tx.label.trim().toUpperCase()}-${Math.round(tx.amount * 100)}`;
               if (seen.has(key)) return false;
               seen.add(key);
             }
