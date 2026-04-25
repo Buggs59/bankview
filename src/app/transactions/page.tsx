@@ -82,68 +82,68 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="pb-32 pt-4 px-1">
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-12 items-start w-full">
+    <div className="pb-32 pt-4">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-16 items-start w-full">
         
         {/* Main Content: Transactions List */}
-        <div className="order-2 lg:order-1 space-y-12 w-full min-w-0">
+        <div className="order-2 xl:order-1 space-y-12 w-full min-w-0">
           {/* Search Header inside main column */}
-          <div className="flex items-center gap-3 animate-fade-in-up w-full mb-12">
+          <div className="flex items-center gap-4 animate-fade-in-up w-full mb-12">
             <div className="relative flex-1">
-                <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
+                <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
                 <input 
                     type="text" 
                     placeholder="Rechercher une transaction..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-card rounded-2xl py-4 pl-12 pr-6 text-sm text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#444] font-medium"
+                    className="w-full bg-card rounded-2xl py-5 pl-14 pr-8 text-base text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#444] font-medium"
                 />
             </div>
-            <button className="w-12 h-12 rounded-2xl bg-card flex items-center justify-center border border-white/5 text-[#8e8e93] hover:text-white transition-colors">
-                <Filter size={18} />
+            <button className="w-14 h-14 rounded-2xl bg-card flex items-center justify-center border border-white/5 text-[#8e8e93] hover:text-white transition-colors">
+                <Filter size={20} />
             </button>
           </div>
 
           {Object.entries(groupedTx).map(([month, data], mIdx) => (
-              <div key={month} className="space-y-6 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 1) * 50}ms` }}>
-                  <div className="flex justify-between items-end px-2 pb-4 border-b border-white/5">
-                      <h2 className="text-2xl font-bold text-white tracking-tight">{month}</h2>
-                      <span className="text-xs font-black text-[#8e8e93] uppercase tracking-widest">
+              <div key={month} className="space-y-8 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 1) * 50}ms` }}>
+                  <div className="flex justify-between items-end px-4 pb-5 border-b border-white/5">
+                      <h2 className="text-3xl font-bold text-white tracking-tight">{month}</h2>
+                      <span className="text-sm font-black text-[#8e8e93] uppercase tracking-[0.2em]">
                           TOTAL : {Math.abs(data.total).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}€
                       </span>
                   </div>
  
-                  <div className="space-y-1">
+                  <div className="space-y-2">
                       {data.txs.map((tx) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
                           return (
-                              <div key={tx.id} className="flex items-center gap-4 p-4 rounded-3xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
-                                  <div className="w-10 h-10 rounded-xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
-                                      <span className="text-[7px] text-[#8e8e93] font-black uppercase">
+                              <div key={tx.id} className="flex items-center gap-6 p-5 rounded-[32px] hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
+                                  <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
+                                      <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
                                           {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
                                       </span>
-                                      <span className="text-sm text-white font-bold leading-none">
+                                      <span className="text-base text-white font-bold leading-none">
                                           {txDate.getDate()}
                                       </span>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                      <h4 className="text-white text-sm font-semibold truncate group-hover:text-accent-purple transition-colors">
+                                      <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
                                           {tx.label}
                                       </h4>
-                                      <div className="flex items-center gap-2 mt-0.5">
-                                          <span className="text-[#444] text-[9px] font-black uppercase tracking-wide">
+                                      <div className="flex items-center gap-3 mt-1">
+                                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
                                               {tx.category?.name || 'Général'}
                                           </span>
                                           {tx.is_advance && (
-                                              <span className="text-accent-yellow text-[8px] font-black uppercase">
-                                                  • Prévu
+                                              <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
+                                                  Prévu
                                               </span>
                                           )}
                                       </div>
                                   </div>
-                                  <div className="text-right shrink-0 min-w-[90px]">
-                                      <p className={`text-base font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                                  <div className="text-right shrink-0 min-w-[120px]">
+                                      <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
                                           {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
                                       </p>
                                   </div>
@@ -156,32 +156,34 @@ export default function TransactionsPage() {
         </div>
 
         {/* Spending Summary Chart */}
-        <div className="order-1 lg:order-2 w-full lg:sticky lg:top-8 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl">
-              <div className="flex justify-between items-end">
+        <div className="order-1 xl:order-2 w-full xl:sticky xl:top-12 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[48px] p-10 border border-white/5 space-y-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-purple/5 blur-[80px] rounded-full" />
+              
+              <div className="flex justify-between items-end relative z-10">
                   <div>
-                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Dépenses 7j</span>
-                      <div className="flex items-baseline gap-2 mt-1">
-                          <span className="text-4xl font-bold text-white">€{stats.weekTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
-                          <span className="text-accent-purple text-[10px] font-bold bg-accent-purple/10 px-2 py-0.5 rounded-full">
-                              Semaine
+                      <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Dépenses 7j</span>
+                      <div className="flex items-baseline gap-3 mt-2">
+                          <span className="text-5xl font-black text-white tracking-tighter">€{stats.weekTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
+                          <span className="text-accent-purple text-[10px] font-black bg-accent-purple/10 px-3 py-1 rounded-full uppercase tracking-widest">
+                              7 Jours
                           </span>
                       </div>
                   </div>
                   <div className="text-right">
-                      <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest">Moyenne /j</span>
-                      <p className="text-xl font-bold text-white mt-1">€{stats.average.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</p>
+                      <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Moyenne</span>
+                      <p className="text-2xl font-bold text-white mt-1">€{stats.average.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</p>
                   </div>
               </div>
  
-              <div className="h-44 flex items-end justify-between gap-2 px-1">
+              <div className="h-56 flex items-end justify-between gap-3 px-1 relative z-10">
                   {stats.dayHeights.map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-4 h-full justify-end group">
+                      <div key={i} className="flex-1 flex flex-col items-center gap-5 h-full justify-end group">
                           <div 
-                              className={`w-full rounded-xl transition-all duration-700 ease-premium ${h === Math.max(...stats.dayHeights) ? 'bg-accent-purple shadow-[0_0_20px_rgba(140,141,250,0.4)]' : 'bg-white/5 group-hover:bg-white/10'}`} 
-                              style={{ height: `${Math.max(h, 4)}%` }} 
+                              className={`w-full rounded-2xl transition-all duration-700 ease-premium ${h === Math.max(...stats.dayHeights) ? 'bg-accent-purple shadow-[0_0_30px_rgba(140,141,250,0.5)]' : 'bg-white/5 group-hover:bg-white/10'}`} 
+                              style={{ height: `${Math.max(h, 6)}%` }} 
                           />
-                          <span className="text-[#444] text-[10px] font-black uppercase tracking-tighter">
+                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-tighter opacity-40">
                               {['S','D','L','M','M','J','V'][i]}
                           </span>
                       </div>
@@ -189,15 +191,15 @@ export default function TransactionsPage() {
               </div>
            </div>
  
-           {/* Quick Filter or Legend */}
-           <div className="grid grid-cols-2 gap-3 px-2">
-              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
-                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Top Poste</span>
-                  <p className="text-sm font-bold text-white truncate">{stats.biggestCat}</p>
+           {/* Info Cards */}
+           <div className="grid grid-cols-2 gap-4">
+              <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all">
+                  <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Top Poste</span>
+                  <p className="text-base font-bold text-white truncate">{stats.biggestCat}</p>
               </div>
-              <div className="p-4 rounded-3xl bg-white/5 border border-white/5">
-                  <span className="text-[9px] font-black text-[#8e8e93] uppercase block mb-1">Activité</span>
-                  <p className="text-sm font-bold text-white">7 derniers jours</p>
+              <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all">
+                  <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Activité</span>
+                  <p className="text-base font-bold text-white">Constant</p>
               </div>
            </div>
         </div>

@@ -72,46 +72,136 @@ export default function ConfigPage() {
     );
   }
 
-  return (
-    <div className="space-y-8 pb-32 pt-4 px-1">
-      
-      <div className="flex flex-col lg:flex-row-reverse gap-12 items-stretch lg:items-start w-full">
+  return (  return (
+    <div className="space-y-12 pb-32 pt-4">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-16 items-start w-full">
         
-        {/* Right Sidebar: Add Family Form */}
-        <div className="w-full lg:w-[380px] lg:sticky lg:top-8 space-y-6 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[40px] p-8 border border-white/5 space-y-8 shadow-2xl relative overflow-hidden">
-             <div className="space-y-6 relative z-10">
-                <div className="flex items-center gap-2 text-accent-purple">
-                    <FolderPlus size={18} />
-                    <span className="text-[10px] font-black uppercase tracking-widest">Nouvelle Famille</span>
-                </div>
-                
-                <form onSubmit={handleAddFamily} className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#444] uppercase px-1">Nom de la famille</label>
+        {/* Main Content: Families & Categories List */}
+        <div className="order-2 xl:order-1 flex-1 space-y-12 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
+            <div className="flex justify-between items-end px-4">
+                 <div className="space-y-2">
+                    <h3 className="text-[#8e8e93] text-sm font-black uppercase tracking-[0.3em] opacity-60">Structure Financière</h3>
+                    <h2 className="text-4xl font-black text-white tracking-tighter">Familles & Catégories</h2>
+                 </div>
+            </div>
+
+            <div className="space-y-10">
+                {families.length === 0 ? (
+                    <div className="p-20 rounded-[48px] bg-card/20 border border-dashed border-white/5 text-center space-y-4">
+                        <div className="w-20 h-20 rounded-[32px] bg-white/5 flex items-center justify-center mx-auto opacity-20">
+                            <Hash size={32} />
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-[#8e8e93] text-lg font-bold">Aucune structure définie</p>
+                            <p className="text-[#444] text-sm font-medium">Commence par créer une famille de catégories à droite.</p>
+                        </div>
+                    </div>
+                ) : families.map((fam) => (
+                    <div key={fam.id} className="bg-card/40 backdrop-blur-md rounded-[48px] border border-white/5 overflow-hidden shadow-2xl">
+                        {/* Family Header */}
+                        <div className="p-8 flex justify-between items-center bg-white/[0.03] border-b border-white/5">
+                            <div className="flex items-center gap-6">
+                                <div className={`w-4 h-4 rounded-full ${fam.type === 'expense' ? 'bg-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.6)]' : 'bg-accent-green shadow-[0_0_15px_rgba(52,211,153,0.6)]'}`} />
+                                <div className="space-y-1">
+                                    <h3 className="text-white text-2xl font-bold tracking-tight">{fam.name}</h3>
+                                    <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em] opacity-40">
+                                        {fam.type === 'expense' ? 'Flux Sortant' : 'Flux Entrant'}
+                                    </span>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => handleDeleteFamily(fam.id)}
+                                className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-[#444] hover:text-red-400 transition-all border border-white/5 hover:border-red-400/20"
+                            >
+                                <Trash2 size={20} />
+                            </button>
+                        </div>
+
+                        {/* Categories in this family */}
+                        <div className="p-10 space-y-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {categories.filter(c => c.family_id === fam.id).map(cat => (
+                                    <div key={cat.id} className="flex justify-between items-center p-6 rounded-3xl bg-black/40 border border-white/5 group hover:border-white/10 transition-all shadow-inner">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+                                                <Tag size={16} className="text-[#8e8e93] group-hover:text-white" />
+                                            </div>
+                                            <span className="text-white text-base font-bold tracking-tight">{cat.name}</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => handleDeleteCategory(cat.id)}
+                                            className="opacity-0 group-hover:opacity-100 w-10 h-10 rounded-xl bg-red-400/10 text-red-400 flex items-center justify-center transition-all hover:bg-red-400 hover:text-white"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Add Category Form */}
+                            <div className="pt-6 flex gap-4">
+                                <div className="relative flex-1">
+                                    <Tag className="absolute left-5 top-1/2 -translate-y-1/2 text-[#444]" size={18} />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Nouvelle catégorie..."
+                                        value={newCatNames[fam.id] || ''}
+                                        onChange={(e) => setNewCatNames(prev => ({ ...prev, [fam.id]: e.target.value }))}
+                                        className="w-full bg-black/40 rounded-[24px] py-5 pl-14 pr-6 text-sm text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#2c2c2e] font-medium"
+                                    />
+                                </div>
+                                <button 
+                                    onClick={() => handleAddCategory(fam.id)}
+                                    className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-white hover:bg-white/10 active:scale-95 transition-all border border-white/5 shadow-xl"
+                                >
+                                    <Plus size={24} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+
+        {/* Sidebar: Forms & Tools */}
+        <div className="order-1 xl:order-2 w-full xl:sticky xl:top-12 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+           <div className="bg-card rounded-[48px] p-12 border border-white/5 space-y-10 shadow-2xl relative overflow-hidden">
+              <div className="absolute -right-20 -top-20 w-80 h-80 bg-accent-purple/10 blur-[100px] rounded-full" />
+              
+              <div className="space-y-10 relative z-10">
+                 <div className="flex items-center gap-4 text-accent-purple">
+                    <div className="w-12 h-12 rounded-2xl bg-accent-purple/10 flex items-center justify-center">
+                        <FolderPlus size={24} />
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.2em]">Architecture</span>
+                 </div>
+                 
+                 <form onSubmit={handleAddFamily} className="space-y-8">
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-[#8e8e93] uppercase tracking-[0.1em] px-1 opacity-60">Nom de la famille</label>
                         <input 
                             type="text" 
                             placeholder="ex: Loisirs, Maison..."
                             value={newFamilyName}
                             onChange={(e) => setNewFamilyName(e.target.value)}
-                            className="w-full bg-[#050505] rounded-2xl py-4 px-6 text-sm text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#2c2c2e]"
+                            className="w-full bg-black/40 rounded-[24px] py-5 px-8 text-sm text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#2c2c2e] font-medium"
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[10px] font-black text-[#444] uppercase px-1">Type de flux</label>
-                        <div className="bg-[#050505] p-1.5 rounded-full flex border border-white/5 shadow-inner">
+                    <div className="space-y-3">
+                        <label className="text-xs font-black text-[#8e8e93] uppercase tracking-[0.1em] px-1 opacity-60">Type de flux</label>
+                        <div className="bg-black/40 p-2 rounded-[28px] flex border border-white/5 shadow-inner">
                             <button 
                                 type="button"
                                 onClick={() => setNewFamilyType('expense')}
-                                className={`flex-1 py-3 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${newFamilyType === 'expense' ? 'bg-white/10 text-white' : 'text-[#8e8e93]'}`}
+                                className={`flex-1 py-4 rounded-[22px] text-[10px] font-black uppercase tracking-[0.1em] transition-all ${newFamilyType === 'expense' ? 'bg-white text-black shadow-2xl scale-[1.02]' : 'text-[#8e8e93] hover:text-white'}`}
                             >
                                 Dépense
                             </button>
                             <button 
                                 type="button"
                                 onClick={() => setNewFamilyType('income')}
-                                className={`flex-1 py-3 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${newFamilyType === 'income' ? 'bg-white/10 text-white' : 'text-[#8e8e93]'}`}
+                                className={`flex-1 py-4 rounded-[22px] text-[10px] font-black uppercase tracking-[0.1em] transition-all ${newFamilyType === 'income' ? 'bg-white text-black shadow-2xl scale-[1.02]' : 'text-[#8e8e93] hover:text-white'}`}
                             >
                                 Revenu
                             </button>
@@ -120,100 +210,30 @@ export default function ConfigPage() {
 
                     <button 
                         type="submit"
-                        className="w-full bg-accent-purple text-white py-4 rounded-2xl font-bold text-sm hover:opacity-90 active:scale-[0.98] transition-all shadow-lg shadow-accent-purple/20"
+                        className="w-full bg-accent-purple text-white py-5 rounded-[28px] font-black text-xs uppercase tracking-[0.2em] hover:opacity-90 active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(140,141,250,0.3)] border border-white/10"
                     >
                         Créer la famille
                     </button>
-                </form>
-             </div>
+                 </form>
+              </div>
            </div>
 
-           {/* Info Card */}
-           <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 space-y-3">
-              <h4 className="text-white text-xs font-bold uppercase tracking-wide flex items-center gap-2">
-                <Settings size={14} className="text-[#8e8e93]" /> Organisation
-              </h4>
-              <p className="text-[#8e8e93] text-[11px] leading-relaxed">
-                Les familles permettent de regrouper tes catégories. Par exemple, "Alimentation" peut contenir "Supermarché" et "Restaurants".
-              </p>
+           {/* Organization Guide */}
+           <div className="p-10 rounded-[48px] bg-gradient-to-br from-white/[0.03] to-transparent border border-white/5 flex items-start gap-6 shadow-xl">
+              <div className="w-14 h-14 rounded-2xl bg-black/40 border border-white/5 flex items-center justify-center shrink-0">
+                 <Settings size={24} className="text-[#8e8e93]" />
+              </div>
+              <div className="space-y-2">
+                 <h4 className="text-white text-sm font-black uppercase tracking-widest">Conseil d'Organisation</h4>
+                 <p className="text-[#8e8e93] text-sm leading-relaxed font-medium">
+                    Utilise les familles pour une segmentation macro (Besoin vs Envie) et les catégories pour le détail opérationnel.
+                 </p>
+              </div>
            </div>
-        </div>
-
-        {/* Main Content: Families & Categories List */}
-        <div className="flex-1 space-y-10 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-            <div className="flex justify-between items-end px-2">
-                 <div className="space-y-1">
-                    <h3 className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.2em]">Structure Financière</h3>
-                    <h2 className="text-3xl font-bold text-white tracking-tight">Familles & Catégories</h2>
-                 </div>
-            </div>
-
-            <div className="space-y-8">
-                {families.length === 0 ? (
-                    <div className="p-12 rounded-[40px] bg-card/30 border border-dashed border-white/10 text-center">
-                        <p className="text-[#444] font-bold">Aucune famille créée.</p>
-                        <p className="text-[#2c2c2e] text-xs">Utilise le formulaire à droite pour commencer.</p>
-                    </div>
-                ) : families.map((fam) => (
-                    <div key={fam.id} className="bg-card/30 rounded-[40px] border border-white/5 overflow-hidden">
-                        {/* Family Header */}
-                        <div className="p-6 flex justify-between items-center bg-white/5">
-                            <div className="flex items-center gap-4">
-                                <div className={`w-3 h-3 rounded-full ${fam.type === 'expense' ? 'bg-accent-purple shadow-[0_0_8px_rgba(140,141,250,0.4)]' : 'bg-accent-green shadow-[0_0_8px_rgba(52,211,153,0.4)]'}`} />
-                                <h3 className="text-white text-xl font-bold">{fam.name}</h3>
-                                <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-widest bg-white/5 px-2 py-0.5 rounded">
-                                    {fam.type === 'expense' ? 'Dépense' : 'Revenu'}
-                                </span>
-                            </div>
-                            <button 
-                                onClick={() => handleDeleteFamily(fam.id)}
-                                className="p-2 text-[#444] hover:text-red-400 transition-colors"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </div>
-
-                        {/* Categories in this family */}
-                        <div className="p-6 space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                {categories.filter(c => c.family_id === fam.id).map(cat => (
-                                    <div key={cat.id} className="flex justify-between items-center p-4 rounded-2xl bg-[#050505]/50 border border-white/5 group">
-                                        <div className="flex items-center gap-3">
-                                            <Tag size={14} className="text-[#444] group-hover:text-white transition-colors" />
-                                            <span className="text-white text-sm font-semibold">{cat.name}</span>
-                                        </div>
-                                        <button 
-                                            onClick={() => handleDeleteCategory(cat.id)}
-                                            className="opacity-0 group-hover:opacity-100 p-1 text-[#444] hover:text-red-400 transition-all"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Add Category Form */}
-                            <div className="pt-4 flex gap-2">
-                                <input 
-                                    type="text" 
-                                    placeholder="Ajouter une catégorie..."
-                                    value={newCatNames[fam.id] || ''}
-                                    onChange={(e) => setNewCatNames(prev => ({ ...prev, [fam.id]: e.target.value }))}
-                                    className="flex-1 bg-[#050505] rounded-xl py-3 px-5 text-sm text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#2c2c2e]"
-                                />
-                                <button 
-                                    onClick={() => handleAddCategory(fam.id)}
-                                    className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition-all"
-                                >
-                                    <Plus size={18} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                ))}
-            </div>
         </div>
       </div>
+    </div>
+
     </div>
   );
 }

@@ -22,14 +22,38 @@ export default function RootLayout({
   return (
     <html lang="fr" className={`${outfit.variable} h-full antialiased dark`}>
       <body className="min-h-full bg-[#050505] text-[#ffffff] flex font-sans selection:bg-[#8c8dfa]/30">
-        <Sidebar />
-        <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
-          <main className="flex-1 w-full max-w-[1600px] p-4 md:p-12 pb-32 md:pb-12">
-            {children}
-          </main>
-          <BottomNav />
-        </div>
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
+  );
+}
+
+import { headers } from 'next/headers';
+
+async function LayoutWrapper({ children }: { children: React.ReactNode }) {
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '';
+  const isAuthPage = pathname.includes('/login');
+
+  if (isAuthPage) {
+    return (
+      <div className="flex-1 flex flex-col w-full">
+        <main className="flex-1 w-full flex items-center justify-center p-6">
+          {children}
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <Sidebar />
+      <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
+        <main className="flex-1 w-full max-w-[1600px] mx-auto p-6 md:p-12 pb-32 md:pb-12">
+          {children}
+        </main>
+        <BottomNav />
+      </div>
+    </>
   );
 }
