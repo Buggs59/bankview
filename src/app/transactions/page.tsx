@@ -201,7 +201,6 @@ export default function TransactionsPage() {
                       {advanceTransactions.map((tx) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
-                          const type = getTransactionType(tx.label || '');
                           return (
                               <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
                                   <div className="w-12 h-12 rounded-2xl bg-card border border-accent-yellow/20 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-yellow transition-colors shadow-sm relative overflow-hidden">
