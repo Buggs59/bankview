@@ -42,12 +42,42 @@ export default function SwipeableTransaction({
   const txDate = new Date(transaction.date_real);
   const isSpending = transaction.amount < 0;
 
-  const relevantCategories = categories.filter(cat => {
-    return isSpending ? cat.families?.type === 'expense' : cat.families?.type === 'income';
-  });
+  const relevantCategories = categories
+    .filter(cat => isSpending ? cat.families?.type === 'expense' : cat.families?.type === 'income')
+    .sort((a, b) => a.name.localeCompare(b.name));
 
-  // Ajout du bouton "Général" au début
-  const allOptions = [{ id: null, name: 'GÉNÉRAL' }, ...relevantCategories];
+  // Ajout du bouton "Général" et répétition pour l'effet infini
+  const baseOptions = [{ id: null, name: 'GÉNÉRAL' }, ...relevantCategories];
+  // On répète la liste pour simuler l'infini
+  const allOptions = [...baseOptions, ...baseOptions, ...baseOptions];
+
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Centrer sur l'item sélectionné au montage ou quand on swipe
+  useEffect(() => {
+    if (isSwiped && scrollRef.current) {
+      const index = baseOptions.findIndex(o => o.id === transaction.category_id);
+      if (index !== -1) {
+        // On se place sur la répétition du milieu
+        const targetIndex = baseOptions.length + index;
+        const targetScroll = targetIndex * 36 - (88 / 2 - 36 / 2);
+        scrollRef.current.scrollTop = targetScroll;
+      }
+    }
+  }, [isSwiped, transaction.category_id, baseOptions.length]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const itemHeight = 36;
+    const listHeight = baseOptions.length * itemHeight;
+
+    // Boucle infinie simple
+    if (el.scrollTop < listHeight - 100) {
+      el.scrollTop += listHeight;
+    } else if (el.scrollTop > listHeight * 2) {
+      el.scrollTop -= listHeight;
+    }
+  };
 
   const handleDragEnd = (event: any, info: any) => {
     if (info.offset.x < -40) {
@@ -84,12 +114,16 @@ export default function SwipeableTransaction({
       {/* Background Vertical Wheel Picker */}
       <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden">
         <div className="w-[160px] h-full relative">
-          <div className="absolute inset-0 flex flex-col items-center justify-center py-2 overflow-y-auto scroll-hide snap-y snap-mandatory">
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="absolute inset-0 flex flex-col py-[26px] overflow-y-auto scroll-hide snap-y snap-mandatory"
+          >
             {allOptions.map((cat, i) => (
               <button
-                key={cat.id || 'general'}
+                key={`${cat.id || 'gen'}-${i}`}
                 onClick={() => selectCategory(cat.id as any)}
-                className={`w-full min-h-[36px] flex items-center justify-center px-4 snap-center transition-all duration-300 ${
+                className={`w-full min-h-[36px] flex items-center justify-center px-4 snap-center transition-all duration-300 relative ${
                   transaction.category_id === cat.id 
                     ? 'text-accent-purple font-black scale-110' 
                     : 'text-[#8e8e93]/60 text-[11px] font-bold hover:text-white'
@@ -101,12 +135,12 @@ export default function SwipeableTransaction({
                 )}
               </button>
             ))}
-            {/* Padding buttons to allow first/last items to center */}
-            <div className="min-h-[30px] w-full" />
           </div>
           {/* Overlay for wheel effect - Darker at edges for depth */}
-          <div className="absolute top-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-b from-card to-transparent z-20" />
-          <div className="absolute bottom-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-t from-card to-transparent z-20" />
+          <div className="absolute top-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-b from-card to-transparent z-20" />
+          <div className="absolute bottom-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-t from-card to-transparent z-20" />
+          {/* Center highlight area */}
+          <div className="absolute top-1/2 left-4 right-4 h-[36px] -translate-y-1/2 border-y border-white/5 pointer-events-none" />
         </div>
       </div>
 
