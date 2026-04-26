@@ -32,21 +32,37 @@ export default function TransactionsPage() {
     ), [regularTransactions, searchQuery]
   );
 
-  const groupedTx = useMemo(() => {
-    const groups: { [key: string]: { txs: any[], total: number } } = {};
+  const { groups: groupedTx, sortedKeys: monthKeys } = useMemo(() => {
+    const groups: Record<string, { label: string, txs: any[], total: number }> = {};
+    
     filteredRegularTransactions.forEach(tx => {
       const date = new Date(tx.date_real);
-      const monthYear = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
-      const capitalizedMonth = monthYear.charAt(0).toUpperCase() + monthYear.slice(1);
+      const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
+      const capitalizedLabel = label.charAt(0).toUpperCase() + label.slice(1);
       
-      if (!groups[capitalizedMonth]) {
-        groups[capitalizedMonth] = { txs: [], total: 0 };
+      if (!groups[key]) {
+        groups[key] = { label: capitalizedLabel, txs: [], total: 0 };
       }
-      groups[capitalizedMonth].txs.push(tx);
-      groups[capitalizedMonth].total += tx.amount;
+      groups[key].txs.push(tx);
+      groups[key].total += tx.amount;
     });
-    return groups;
+    
+    const sortedKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
+    return { groups, sortedKeys };
   }, [filteredRegularTransactions]);
+
+  const [activeTab, setActiveTab] = useState<string>('');
+
+  useEffect(() => {
+    if (monthKeys.length > 0 && !activeTab) {
+      // Si on a des transactions "À venir", on pourrait vouloir commencer par là, 
+      // mais sinon on prend le mois le plus récent.
+      setActiveTab(monthKeys[0]);
+    } else if (monthKeys.length === 0 && advanceTransactions.length > 0) {
+      setActiveTab('upcoming');
+    }
+  }, [monthKeys, activeTab, advanceTransactions]);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -98,7 +114,7 @@ export default function TransactionsPage() {
         {/* Main Content: Transactions List */}
         <div className="order-2 xl:order-1 space-y-12 w-full min-w-0">
           {/* Search Header inside main column */}
-          <div className="flex items-center gap-4 animate-fade-in-up w-full mb-12">
+          <div className="flex items-center gap-4 animate-fade-in-up w-full mb-8">
             <div className="relative flex-1">
                 <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
                 <input 
@@ -114,8 +130,37 @@ export default function TransactionsPage() {
             </button>
           </div>
 
+          {/* Monthly Tabs Navigation */}
+          <div className="flex gap-2 overflow-x-auto pb-4 scroll-hide animate-fade-in-up" style={{ animationDelay: '100ms' }}>
+            {advanceTransactions.length > 0 && (
+              <button
+                onClick={() => setActiveTab('upcoming')}
+                className={`px-6 py-3 rounded-2xl border transition-all whitespace-nowrap font-bold text-sm ${
+                  activeTab === 'upcoming' 
+                  ? 'bg-accent-yellow/10 border-accent-yellow text-accent-yellow shadow-[0_0_15px_rgba(255,214,10,0.2)]' 
+                  : 'bg-card border-white/5 text-[#8e8e93] hover:text-white hover:border-white/10'
+                }`}
+              >
+                À VENIR
+              </button>
+            )}
+            {monthKeys.map((key) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`px-6 py-3 rounded-2xl border transition-all whitespace-nowrap font-bold text-sm uppercase tracking-tight ${
+                  activeTab === key 
+                  ? 'bg-accent-purple/10 border-accent-purple text-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.2)]' 
+                  : 'bg-card border-white/5 text-[#8e8e93] hover:text-white hover:border-white/10'
+                }`}
+              >
+                {groupedTx[key].label}
+              </button>
+            ))}
+          </div>
+
           {/* Advance / Pending Section */}
-          {advanceTransactions.length > 0 && !searchQuery && (
+          {activeTab === 'upcoming' && advanceTransactions.length > 0 && !searchQuery && (
               <div className="space-y-8 animate-fade-in-up">
                   <div className="flex justify-between items-end px-4 pb-5 border-b border-white/5">
                       <div className="space-y-1">
@@ -167,17 +212,18 @@ export default function TransactionsPage() {
               </div>
           )}
 
-          {Object.entries(groupedTx).map(([month, data], mIdx) => (
-              <div key={month} className="space-y-8 animate-fade-in-up" style={{ animationDelay: `${(mIdx + 1) * 50}ms` }}>
+          {/* Monthly Transaction List */}
+          {activeTab !== 'upcoming' && groupedTx[activeTab] && (
+              <div key={activeTab} className="space-y-8 animate-fade-in-up">
                   <div className="flex justify-between items-end px-4 pb-5 border-b border-white/5">
-                      <h2 className="text-3xl font-bold text-white tracking-tight">{month}</h2>
+                      <h2 className="text-3xl font-bold text-white tracking-tight">{groupedTx[activeTab].label}</h2>
                       <span className="text-sm font-black text-[#8e8e93] uppercase tracking-[0.2em]">
-                          TOTAL : {Math.abs(data.total).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}€
+                          TOTAL : {Math.abs(groupedTx[activeTab].total).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}€
                       </span>
                   </div>
  
                   <div className="space-y-2">
-                      {data.txs.map((tx) => {
+                      {groupedTx[activeTab].txs.map((tx: any) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
                           return (
@@ -215,7 +261,50 @@ export default function TransactionsPage() {
                       })}
                   </div>
               </div>
-          ))}
+          )}
+
+          {/* Fallback when searching */}
+          {searchQuery && filteredRegularTransactions.length === 0 && (
+            <div className="text-center py-20 animate-fade-in-up">
+              <p className="text-[#8e8e93] font-medium">Aucune transaction ne correspond à votre recherche.</p>
+            </div>
+          )}
+
+          {searchQuery && filteredRegularTransactions.length > 0 && (
+            <div className="space-y-4 animate-fade-in-up">
+              {filteredRegularTransactions.map((tx) => {
+                const txDate = new Date(tx.date_real);
+                const isSpending = tx.amount < 0;
+                return (
+                  <div key={tx.id} className="flex items-center gap-6 p-5 rounded-[32px] hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
+                    <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
+                        <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
+                            {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
+                        </span>
+                        <span className="text-base text-white font-bold leading-none">
+                            {txDate.getDate()}
+                        </span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                        <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
+                            {tx.label}
+                        </h4>
+                        <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
+                                {tx.category?.name || 'Général'}
+                            </span>
+                        </div>
+                    </div>
+                    <div className="text-right shrink-0 min-w-[120px]">
+                        <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                            {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                        </p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Spending Summary Chart */}
