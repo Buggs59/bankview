@@ -50,29 +50,44 @@ export default function SwipeableTransaction({
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
 
+  const scrollRef = useRef<HTMLDivElement>(null);
   const controls = useAnimationControls();
   const txDate = new Date(transaction.date_real);
   const isSpending = transaction.amount < 0;
   
   const accentColor = isSpending ? 'text-accent-red' : 'text-accent-green';
   const bgColor = isSpending ? 'bg-accent-red/10' : 'bg-accent-green/10';
+  const accentBorder = transaction.is_advance ? 'border-accent-yellow/30' : 'border-white/10';
+  const accentHover = transaction.is_advance ? 'group-hover:border-accent-yellow' : 'group-hover:border-accent-purple/30';
 
   const baseOptions = categories;
+  const allOptions = [{ id: null, name: 'GÉNÉRAL' } as any, ...baseOptions];
+
+  useEffect(() => {
+    if (isSwiped && scrollRef.current) {
+      const currentIndex = allOptions.findIndex(c => c.id === transaction.category_id);
+      const scrollPos = (currentIndex !== -1 ? currentIndex : 0) * 36;
+      scrollRef.current.scrollTop = scrollPos;
+    }
+  }, [isSwiped, transaction.category_id]);
+
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    const index = Math.round(scrollTop / 36);
+    const selected = allOptions[index];
+    if (selected && selected.id !== transaction.category_id) {
+      onSelectCategory(selected.id);
+    }
+  };
 
   const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x < -100) {
+    if (info.offset.x < -80) {
       setIsSwiped(true);
-      controls.start({ x: -280 });
+      controls.start({ x: -160 });
     } else {
       setIsSwiped(false);
       controls.start({ x: 0 });
     }
-  };
-
-  const selectCategory = (id: string | null) => {
-    onSelectCategory(id);
-    setIsSwiped(false);
-    controls.start({ x: 0 });
   };
 
   useEffect(() => {
@@ -93,11 +108,9 @@ export default function SwipeableTransaction({
     const res = await linkTransactionsAction(transaction.id, targetId);
     if (res.success) {
       if (onRefresh) onRefresh();
-      // Don't close modal to allow multiple links if it's a reimbursement
       if (transaction.amount < 0) {
         setShowDetails(false);
       } else {
-        // Refresh matches
         loadMatches();
       }
     } else {
@@ -128,48 +141,54 @@ export default function SwipeableTransaction({
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl group mb-2">
-      {/* Background/Action Layer */}
-      <div className="absolute inset-0 bg-[#1c1c1e] flex items-center justify-end px-6 gap-3">
-        <div className="flex flex-col items-center gap-1">
-            <span className="text-[9px] font-black text-[#444] uppercase tracking-widest mb-1">Catégories</span>
-            <div className="flex gap-2">
-                {baseOptions.slice(0, 4).map((cat) => (
-                    <button
-                        key={cat.id}
-                        onClick={() => selectCategory(cat.id)}
-                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-purple/20 hover:border-accent-purple/30 transition-all text-white/40 hover:text-white"
-                        title={cat.name}
-                    >
-                        <Tag size={18} />
-                    </button>
-                ))}
-                <button
-                    onClick={() => selectCategory(null)}
-                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-red/20 hover:border-accent-red/30 transition-all text-white/40 hover:text-white"
-                    title="Général"
-                >
-                    <X size={18} />
-                </button>
-            </div>
+    <div className="relative overflow-visible rounded-2xl mb-2 group h-[88px]">
+      {/* Background Vertical Wheel Picker */}
+      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden rounded-2xl">
+        <div className="w-[160px] h-full relative">
+          <div 
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="absolute inset-0 overflow-y-scroll scrollbar-hide snap-y snap-mandatory py-[26px]"
+          >
+            {allOptions.map((cat) => (
+              <div 
+                key={cat.id || 'null'} 
+                className="h-[36px] flex items-center justify-center snap-center px-4"
+              >
+                <span className={`text-[10px] font-black uppercase tracking-widest transition-all ${
+                  transaction.category_id === cat.id ? 'text-accent-purple scale-110' : 'text-[#444] scale-90'
+                }`}>
+                  {cat.name}
+                </span>
+              </div>
+            ))}
+          </div>
+          {/* Wheel depth effects */}
+          <div className="absolute top-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-b from-card to-transparent z-20" />
+          <div className="absolute bottom-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-t from-card to-transparent z-20" />
+          <div className="absolute top-1/2 left-4 right-4 h-[36px] -translate-y-1/2 border-y border-white/5 pointer-events-none" />
         </div>
       </div>
 
-      {/* Main Row Layer */}
+      {/* Main Content (Swipeable) */}
       <motion.div
         drag="x"
-        dragConstraints={{ left: -280, right: 0 }}
+        dragConstraints={{ left: -160, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-card border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors rounded-2xl z-10"
+        className="relative bg-card border border-white/5 h-full px-4 flex items-center gap-4 z-10 touch-pan-y active:cursor-grabbing shadow-lg rounded-2xl"
       >
-        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner border border-white/5`}>
-            <span className={`text-lg font-black ${accentColor}`}>
-                {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 0 }).replace('-', '')}
+        <div className={`w-12 h-12 rounded-2xl bg-card border ${accentBorder} flex flex-col items-center justify-center shrink-0 ${accentHover} transition-colors shadow-sm relative overflow-hidden`}>
+            {transaction.is_advance && <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />}
+            <span className={`text-[8px] ${transaction.is_advance ? 'text-accent-yellow' : 'text-[#8e8e93]'} font-black uppercase tracking-widest relative z-10`}>
+                {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
+            </span>
+            <span className="text-base text-white font-bold leading-none relative z-10">
+                {txDate.getDate()}
             </span>
         </div>
-
+        
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
                 {getIcon(transaction.transaction_type, accentColor)}
@@ -177,7 +196,6 @@ export default function SwipeableTransaction({
                     {transaction.clean_name || transaction.label}
                 </h4>
                 {(transaction.link_id || transaction.linked_id) && <Link2 size={12} className="text-accent-purple shrink-0" />}
-                
                 <button 
                   onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
@@ -191,10 +209,6 @@ export default function SwipeableTransaction({
                 </button>
             </div>
             <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[9px] font-black text-[#444] uppercase tracking-[0.2em]">
-                    {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
-                </span>
-                <span className="w-1 h-1 rounded-full bg-white/10" />
                 <div className="px-2.5 py-0.5 rounded-full bg-accent-purple/10 border border-accent-purple/20">
                   <span className="text-[9px] font-black text-accent-purple uppercase tracking-wider">
                       {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
@@ -203,8 +217,19 @@ export default function SwipeableTransaction({
             </div>
         </div>
 
-        <div className="flex items-center gap-3">
-            <ChevronRight size={16} className="text-[#222] group-hover:text-accent-purple transition-colors" />
+        <div className="text-right shrink-0">
+            <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                {isSpending ? '' : '+'}{Math.abs(transaction.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+            </p>
+            {isSwiped && (
+               <motion.div 
+                 initial={{ opacity: 0, x: 10 }}
+                 animate={{ opacity: 1, x: 0 }}
+                 className="flex items-center justify-end text-accent-purple mt-1"
+               >
+                 <ChevronRight size={14} className="animate-bounce-x" />
+               </motion.div>
+            )}
         </div>
       </motion.div>
 
@@ -215,18 +240,19 @@ export default function SwipeableTransaction({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               className="w-full max-w-lg bg-[#1c1c1e] rounded-[40px] border border-white/10 overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
             >
               <div className="p-8 space-y-8">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center`}>
+                      <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center border border-white/5`}>
                         {getIcon(transaction.transaction_type, accentColor)}
                       </div>
                       <div>
@@ -287,7 +313,7 @@ export default function SwipeableTransaction({
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-accent-green text-[10px] font-black uppercase tracking-widest mb-1">Compensé / Annulé</p>
-                              <p className="text-white font-bold text-sm">Cette opération fait partie d'un groupe de compensation.</p>
+                              <p className="text-white font-bold text-sm text-balance">Cette opération fait partie d'un groupe de compensation.</p>
                             </div>
                             <div className="flex gap-2">
                               {transaction.amount > 0 && (
