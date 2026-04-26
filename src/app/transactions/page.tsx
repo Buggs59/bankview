@@ -3,16 +3,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
 import { getCategoriesAction } from '@/app/actions/categories';
-import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight } from 'lucide-react';
+import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight, X } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import SwipeableTransaction from '@/components/SwipeableTransaction';
 
 export default function TransactionsPage() {
+  // ... existing states ...
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-
   const [categories, setCategories] = useState<any[]>([]);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [showFilterMenu, setShowFilterMenu] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -32,23 +35,27 @@ export default function TransactionsPage() {
   const handleUpdateCategory = async (txId: string, catId: string | null) => {
     setUpdatingId(txId);
     await updateTransactionCategoryAction(txId, catId);
-    // On pourrait recharger toutes les données, mais pour la fluidité 
-    // on met à jour l'état local si le succès est confirmé
     setTransactions(prev => prev.map(tx => 
       tx.id === txId ? { ...tx, category_id: catId, category: categories.find(c => c.id === catId) } : tx
     ));
     setUpdatingId(null);
   };
 
-  const advanceTransactions = useMemo(() => 
-    transactions.filter(tx => tx.is_advance).sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime()),
-    [transactions]
-  );
+  const advanceTransactions = useMemo(() => {
+    let filtered = transactions.filter(tx => tx.is_advance);
+    if (selectedCategoryId) {
+      filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
+    }
+    return filtered.sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime());
+  }, [transactions, selectedCategoryId]);
 
-  const regularTransactions = useMemo(() => 
-    transactions.filter(tx => !tx.is_advance),
-    [transactions]
-  );
+  const regularTransactions = useMemo(() => {
+    let filtered = transactions.filter(tx => !tx.is_advance);
+    if (selectedCategoryId) {
+      filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
+    }
+    return filtered;
+  }, [transactions, selectedCategoryId]);
 
   const filteredRegularTransactions = useMemo(() => 
     regularTransactions.filter(tx => 
@@ -82,8 +89,6 @@ export default function TransactionsPage() {
 
   useEffect(() => {
     if (monthKeys.length > 0 && !activeTab) {
-      // Si on a des transactions "À venir", on pourrait vouloir commencer par là, 
-      // mais sinon on prend le mois le plus récent.
       setActiveTab(monthKeys[0]);
     } else if (monthKeys.length === 0 && advanceTransactions.length > 0) {
       setActiveTab('upcoming');
@@ -97,12 +102,7 @@ export default function TransactionsPage() {
     const weekTx = transactions.filter(tx => new Date(tx.date_real) >= oneWeekAgo && tx.amount < 0);
     const weekTotal = weekTx.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     
-    // Day by day for chart
-    const days = [0,0,0,0,0,0,0]; // S, D, L, M, M, J, V (starting from Sunday index 0 in JS is Sun)
-    // Actually let's map to S, D, L, M, M, J, V matching the labels
-    // Label order: S, D, L, M, M, J, V
-    // JS Date.getDay(): 0=Sun, 1=Mon, ..., 6=Sat
-    // Target indices: Sat=0, Sun=1, Mon=2, Tue=3, Wed=4, Thu=5, Fri=6
+    const days = [0,0,0,0,0,0,0];
     const dayMap: Record<number, number> = { 6: 0, 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
     
     weekTx.forEach(tx => {
@@ -114,7 +114,6 @@ export default function TransactionsPage() {
     const maxDay = Math.max(...days, 1);
     const dayHeights = days.map(d => (d / maxDay) * 100);
 
-    // Biggest post
     const catTotals: Record<string, number> = {};
     weekTx.forEach(tx => {
       const cat = tx.category?.name || 'Général';
@@ -124,6 +123,11 @@ export default function TransactionsPage() {
 
     return { weekTotal, dayHeights, biggestCat, average: weekTotal / 7 };
   }, [transactions]);
+
+  const sortedCategories = useMemo(() => 
+    [...categories].sort((a, b) => a.name.localeCompare(b.name)),
+    [categories]
+  );
 
   if (loading) {
     return (
@@ -140,7 +144,7 @@ export default function TransactionsPage() {
         {/* Main Content: Transactions List */}
         <div className="order-2 xl:order-1 space-y-12 w-full min-w-0">
           {/* Search Header inside main column */}
-          <div className="flex items-center gap-4 animate-fade-in-up w-full mb-8">
+          <div className="flex items-center gap-4 animate-fade-in-up w-full mb-8 z-[50] relative">
             <div className="relative flex-1">
                 <Search size={20} className="absolute left-5 top-1/2 -translate-y-1/2 text-[#8e8e93]" />
                 <input 
@@ -151,9 +155,76 @@ export default function TransactionsPage() {
                     className="w-full bg-card rounded-2xl py-5 pl-14 pr-8 text-base text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#444] font-medium"
                 />
             </div>
-            <button className="w-14 h-14 rounded-2xl bg-card flex items-center justify-center border border-white/5 text-[#8e8e93] hover:text-white transition-colors">
-                <Filter size={20} />
-            </button>
+            
+            <div className="relative">
+                <button 
+                    onClick={() => setShowFilterMenu(!showFilterMenu)}
+                    className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${
+                        selectedCategoryId 
+                        ? 'bg-accent-purple/10 border-accent-purple text-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.2)]' 
+                        : 'bg-card border-white/5 text-[#8e8e93] hover:text-white'
+                    }`}
+                >
+                    {selectedCategoryId ? <Tag size={20} /> : <Filter size={20} />}
+                </button>
+
+                <AnimatePresence>
+                    {showFilterMenu && (
+                        <>
+                            <div 
+                                className="fixed inset-0 z-10" 
+                                onClick={() => setShowFilterMenu(false)} 
+                            />
+                            <motion.div 
+                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                className="absolute right-0 mt-3 w-72 bg-card/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl z-20 overflow-hidden"
+                            >
+                                <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                                    <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em] ml-2">Filtrer par catégorie</span>
+                                    {selectedCategoryId && (
+                                        <button 
+                                            onClick={() => {
+                                                setSelectedCategoryId(null);
+                                                setShowFilterMenu(false);
+                                            }}
+                                            className="text-xs font-bold text-accent-purple hover:underline"
+                                        >
+                                            Effacer
+                                        </button>
+                                    )}
+                                </div>
+                                <div className="max-h-[400px] overflow-y-auto py-2 scroll-hide">
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCategoryId(null);
+                                            setShowFilterMenu(false);
+                                        }}
+                                        className={`w-full text-left px-6 py-4 text-sm font-bold transition-colors flex items-center justify-between group ${!selectedCategoryId ? 'text-white bg-accent-purple/10' : 'text-[#8e8e93] hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        TOUTES LES OPÉRATIONS
+                                        {!selectedCategoryId && <Check size={16} className="text-accent-purple" />}
+                                    </button>
+                                    {sortedCategories.map(cat => (
+                                        <button
+                                            key={cat.id}
+                                            onClick={() => {
+                                                setSelectedCategoryId(cat.id);
+                                                setShowFilterMenu(false);
+                                            }}
+                                            className={`w-full text-left px-6 py-4 text-sm font-bold transition-colors flex items-center justify-between group ${selectedCategoryId === cat.id ? 'text-white bg-accent-purple/10' : 'text-[#8e8e93] hover:text-white hover:bg-white/5'}`}
+                                        >
+                                            {cat.name.toUpperCase()}
+                                            {selectedCategoryId === cat.id && <Check size={16} className="text-accent-purple" />}
+                                        </button>
+                                    ))}
+                                </div>
+                            </motion.div>
+                        </>
+                    )}
+                </AnimatePresence>
+            </div>
           </div>
 
           {/* Monthly Tabs Navigation */}
