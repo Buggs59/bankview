@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
 import { getCategoriesAction } from '@/app/actions/categories';
-import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight, X } from 'lucide-react';
+import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight, X, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import SwipeableTransaction from '@/components/SwipeableTransaction';
 
