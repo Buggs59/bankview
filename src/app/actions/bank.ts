@@ -134,6 +134,48 @@ export async function syncTransactionsAction() {
             };
 
             const labelVal = getLabel(tx);
+            
+            // --- NOUVEAU: NETTOYAGE DU LIBELLÉ ---
+            const cleanLabel = (label: string) => {
+              if (!label) return { clean: '', type: null };
+              let clean = label;
+              let type = '';
+              let card = '';
+
+              // Extraction carte
+              const cardMatch = label.match(/CARTE\s+(\d{4})/i);
+              if (cardMatch) {
+                card = cardMatch[1];
+                clean = clean.replace(cardMatch[0], '');
+              }
+
+              // Patterns types
+              const patterns = [
+                { regex: /^PAIEMENT PSC\s+\d+\s+/i, t: 'CB' },
+                { regex: /^PAIEMENT PSC\s+/i, t: 'CB' },
+                { regex: /^PAIEMENT CB\s+\d+\s+/i, t: 'CB' },
+                { regex: /^VIR\s+(?:RECU|EMIS|SEPA)?\s*/i, t: 'Virement' },
+                { regex: /^F\s+(?:FRAIS|COMM)\s+/i, t: 'Frais' },
+                { regex: /^PRLV\s+/i, t: 'Prélèvement' },
+              ];
+
+              for (const p of patterns) {
+                if (p.regex.test(clean)) {
+                  type = p.t;
+                  clean = clean.replace(p.regex, '');
+                }
+              }
+
+              clean = clean.replace(/\s+/g, ' ').trim();
+              // Formatage Propre (Première lettre majuscule)
+              clean = clean.toLowerCase().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+              
+              const finalType = card ? `${type || 'CB'} ${card}` : type;
+              return { clean: clean || label, type: finalType || null };
+            };
+
+            const { clean: cleanName, type: txType } = cleanLabel(labelVal);
+
             if (!tx.booking_date && !tx.bookingDate && !tx.transaction_date && !tx.transactionDate) {
               console.log("DATELESS TRANSACTION DETECTED:", JSON.stringify(tx));
             }
@@ -192,6 +234,8 @@ export async function syncTransactionsAction() {
               user_id: user.id,
               amount: amountNum,
               label: labelVal,
+              clean_name: cleanName,
+              transaction_type: txType,
               date_real: dateValFinal,
               bank_id: idValFinal,
               accounting_period: dateValFinal.substring(0, 7),

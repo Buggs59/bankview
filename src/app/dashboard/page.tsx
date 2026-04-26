@@ -148,7 +148,7 @@ export default function DashboardPage() {
           <div className="space-y-3">
             {recentTx.length > 0 ? recentTx.map(tx => (
               <div key={tx.id} className="space-y-0.5">
-                <span className="text-white text-[11px] font-bold block truncate">{tx.label}</span>
+                <span className="text-white text-[11px] font-bold block truncate">{tx.clean_name || tx.label}</span>
                 <span className="text-[#8e8e93] text-[10px] font-medium">€{Math.abs(tx.amount).toFixed(2)}</span>
               </div>
             )) : <p className="text-[#8e8e93] text-[10px]">Aucune activité</p>}

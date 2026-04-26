@@ -51,7 +51,9 @@ export default function TransactionsPage() {
 
   const filteredRegularTransactions = useMemo(() => 
     regularTransactions.filter(tx => 
-        (tx.label || '').toLowerCase().includes(searchQuery.toLowerCase())
+        (tx.label || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.clean_name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (tx.transaction_type || '').toLowerCase().includes(searchQuery.toLowerCase())
     ), [regularTransactions, searchQuery]
   );
 
@@ -211,9 +213,16 @@ export default function TransactionsPage() {
                                       </span>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                      <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
-                                          {tx.label}
-                                      </h4>
+                                      <div className="flex items-center gap-2">
+                                          <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
+                                              {tx.clean_name || tx.label}
+                                          </h4>
+                                          {tx.transaction_type && (
+                                            <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
+                                              {tx.transaction_type}
+                                            </span>
+                                          )}
+                                      </div>
                                       <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
                                             <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
@@ -280,9 +289,16 @@ export default function TransactionsPage() {
                                       </span>
                                   </div>
                                   <div className="flex-1 min-w-0">
-                                      <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
-                                          {tx.label}
-                                      </h4>
+                                      <div className="flex items-center gap-2">
+                                          <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
+                                              {tx.clean_name || tx.label}
+                                          </h4>
+                                          {tx.transaction_type && (
+                                            <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
+                                              {tx.transaction_type}
+                                            </span>
+                                          )}
+                                      </div>
                                       <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
                                             <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
@@ -349,9 +365,16 @@ export default function TransactionsPage() {
                         </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                        <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
-                            {tx.label}
-                        </h4>
+                        <div className="flex items-center gap-2">
+                            <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
+                                {tx.clean_name || tx.label}
+                            </h4>
+                            {tx.transaction_type && (
+                              <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
+                                {tx.transaction_type}
+                              </span>
+                            )}
+                        </div>
                         <div className="flex items-center gap-3 mt-1">
                             <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
                                 {tx.category?.name || 'Général'}
