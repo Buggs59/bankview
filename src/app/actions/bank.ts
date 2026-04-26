@@ -498,3 +498,103 @@ export async function updateTransactionCategoryAction(transactionId: string, cat
   revalidatePath('/dashboard');
   return { success: true };
 }
+
+export async function getMatchableTransactionsAction(transactionId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  // 1. Get the source transaction
+  const { data: source, error: sError } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('id', transactionId)
+    .single();
+
+  if (sError || !source) return [];
+
+  // 2. Find transactions with opposite sign and similar amount (+/- 20%)
+  // Range: amount * -1, from 0.8 * abs to 1.2 * abs
+  const targetAmount = -source.amount;
+  const minAmount = Math.min(targetAmount * 0.8, targetAmount * 1.2);
+  const maxAmount = Math.max(targetAmount * 0.8, targetAmount * 1.2);
+
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*, category:categories(name)')
+    .eq('user_id', user.id)
+    .neq('id', transactionId)
+    .is('linked_id', null)
+    .gte('amount', minAmount)
+    .lte('amount', maxAmount)
+    .order('date_real', { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error("Erreur recherche correspondances:", error);
+    return [];
+  }
+
+  return data || [];
+}
+
+export async function linkTransactionsAction(id1: string, id2: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Non connecté' };
+
+  // Update both transactions to point to each other
+  const { error: err1 } = await supabase
+    .from('transactions')
+    .update({ linked_id: id2 })
+    .eq('id', id1)
+    .eq('user_id', user.id);
+
+  const { error: err2 } = await supabase
+    .from('transactions')
+    .update({ linked_id: id1 })
+    .eq('id', id2)
+    .eq('user_id', user.id);
+
+  if (err1 || err2) {
+    return { error: (err1?.message || err2?.message) };
+  }
+
+  revalidatePath('/transactions');
+  revalidatePath('/dashboard');
+  return { success: true };
+}
+
+export async function unlinkTransactionAction(transactionId: string) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: 'Non connecté' };
+
+  // 1. Find the linked transaction
+  const { data: current, error: fError } = await supabase
+    .from('transactions')
+    .select('linked_id')
+    .eq('id', transactionId)
+    .single();
+
+  if (fError || !current) return { error: 'Transaction non trouvée' };
+
+  const linkedId = current.linked_id;
+
+  // 2. Clear linked_id on both
+  const { error: err1 } = await supabase
+    .from('transactions')
+    .update({ linked_id: null })
+    .eq('id', transactionId);
+
+  if (linkedId) {
+    await supabase
+      .from('transactions')
+      .update({ linked_id: null })
+      .eq('id', linkedId);
+  }
+
+  revalidatePath('/transactions');
+  revalidatePath('/dashboard');
+  return { success: true };
+}

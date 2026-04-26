@@ -3,7 +3,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
-import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, Check, ChevronRight, Info, X } from 'lucide-react';
+import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, Check, ChevronRight, Info, X, Link2, Unlink, Link } from 'lucide-react';
+import { getMatchableTransactionsAction, linkTransactionsAction, unlinkTransactionAction } from '@/app/actions/bank';
 
 interface Category {
   id: string;
@@ -23,6 +24,8 @@ interface Transaction {
   transaction_type?: string;
   category_id?: string | null;
   is_advance?: boolean;
+  linked_id?: string | null;
+  category?: { name: string };
 }
 
 interface SwipeableTransactionProps {
@@ -40,6 +43,10 @@ export default function SwipeableTransaction({
 }: SwipeableTransactionProps) {
   const [showDetails, setShowDetails] = useState(false);
   const [isSwiped, setIsSwiped] = useState(false);
+  const [potentialMatches, setPotentialMatches] = useState<any[]>([]);
+  const [loadingMatches, setLoadingMatches] = useState(false);
+  const [isLinking, setIsLinking] = useState(false);
+
   const controls = useAnimationControls();
   const txDate = new Date(transaction.date_real);
   const isSpending = transaction.amount < 0;
@@ -95,6 +102,41 @@ export default function SwipeableTransaction({
     onSelectCategory(id);
     setIsSwiped(false);
     controls.start({ x: 0 });
+  };
+
+  useEffect(() => {
+    if (showDetails && !transaction.linked_id) {
+      loadMatches();
+    }
+  }, [showDetails, transaction.linked_id]);
+
+  async function loadMatches() {
+    setLoadingMatches(true);
+    const matches = await getMatchableTransactionsAction(transaction.id);
+    setPotentialMatches(matches);
+    setLoadingMatches(false);
+  }
+
+  const handleLink = async (targetId: string) => {
+    setIsLinking(true);
+    const res = await linkTransactionsAction(transaction.id, targetId);
+    if (res.success) {
+      setShowDetails(false);
+    } else {
+      alert(res.error);
+    }
+    setIsLinking(false);
+  };
+
+  const handleUnlink = async () => {
+    setIsLinking(true);
+    const res = await unlinkTransactionAction(transaction.id);
+    if (res.success) {
+      setShowDetails(false);
+    } else {
+      alert(res.error);
+    }
+    setIsLinking(false);
   };
 
   const getIcon = (type?: string, color: string = 'text-accent-purple') => {
@@ -168,9 +210,10 @@ export default function SwipeableTransaction({
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
                 {getIcon(transaction.transaction_type, accentColor)}
-                <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
+                <h4 className={`text-[15px] font-semibold truncate transition-colors ${transaction.linked_id ? 'text-[#8e8e93]' : 'text-white group-hover:text-accent-purple'}`}>
                     {transaction.clean_name || transaction.label}
                 </h4>
+                {transaction.linked_id && <Link2 size={12} className="text-accent-purple shrink-0" />}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -273,6 +316,68 @@ export default function SwipeableTransaction({
                         </p>
                       </div>
                       <Tag className="text-accent-purple" size={24} />
+                    </div>
+
+                    {/* LIEN / COMPENSATION */}
+                    <div className="space-y-4 pt-2 border-t border-white/5">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link2 size={14} className="text-accent-purple" />
+                        <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">Compensation</span>
+                      </div>
+
+                      {transaction.linked_id ? (
+                        <div className="bg-accent-green/10 border border-accent-green/20 p-4 rounded-2xl">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-accent-green text-[10px] font-black uppercase tracking-widest mb-1">Compensé / Annulé</p>
+                              <p className="text-white font-bold text-sm">Opération liée et exclue des calculs.</p>
+                            </div>
+                            <button 
+                              onClick={handleUnlink}
+                              disabled={isLinking}
+                              className="p-3 bg-accent-red/10 text-accent-red rounded-xl hover:bg-accent-red/20 transition-all disabled:opacity-50"
+                              title="Dissocier"
+                            >
+                              <Unlink size={18} />
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {loadingMatches ? (
+                            <div className="py-4 flex justify-center">
+                              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-accent-purple" />
+                            </div>
+                          ) : potentialMatches.length > 0 ? (
+                            <div className="space-y-2">
+                              <p className="text-[10px] text-[#444] font-bold uppercase mb-2">Correspondances suggérées :</p>
+                              {potentialMatches.map(m => (
+                                <button
+                                  key={m.id}
+                                  onClick={() => handleLink(m.id)}
+                                  disabled={isLinking}
+                                  className="w-full bg-white/5 border border-white/5 p-3 rounded-xl flex items-center justify-between hover:bg-white/[0.08] hover:border-accent-purple/30 transition-all group/match text-left"
+                                >
+                                  <div className="min-w-0 pr-4">
+                                    <p className="text-white text-xs font-bold truncate uppercase">{m.clean_name || m.label}</p>
+                                    <p className="text-[10px] text-[#8e8e93]">{new Date(m.date_real).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} • {m.category?.name || 'GÉNÉRAL'}</p>
+                                  </div>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className={`text-xs font-bold ${m.amount > 0 ? 'text-accent-green' : 'text-white'}`}>
+                                      {m.amount > 0 ? '+' : ''}{m.amount.toLocaleString('fr-FR', { minimumFractionDigits: 0 })}€
+                                    </span>
+                                    <div className="w-8 h-8 rounded-lg bg-accent-purple/10 flex items-center justify-center text-accent-purple opacity-0 group-hover/match:opacity-100 transition-all">
+                                      <Link size={14} />
+                                    </div>
+                                  </div>
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-xs text-[#444] italic text-center py-2">Aucun remboursement correspondant trouvé.</p>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
 

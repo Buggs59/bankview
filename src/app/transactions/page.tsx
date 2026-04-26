@@ -48,6 +48,8 @@ export default function TransactionsPage() {
     } else if (selectedCategoryId) {
       filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
     }
+    // Only exclude if it is linked to something
+    filtered = filtered.filter(tx => !tx.linked_id);
     return filtered.sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime());
   }, [transactions, selectedCategoryId]);
 
@@ -58,6 +60,7 @@ export default function TransactionsPage() {
     } else if (selectedCategoryId) {
       filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
     }
+    // We keep linked transactions in the list but we will handle them in stats
     return filtered;
   }, [transactions, selectedCategoryId]);
 
@@ -73,6 +76,9 @@ export default function TransactionsPage() {
     const groups: Record<string, { label: string, txs: any[], total: number }> = {};
     
     filteredRegularTransactions.forEach(tx => {
+      // Exclude linked transactions from the monthly totals
+      if (tx.linked_id) return;
+
       const date = new Date(tx.date_real);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
       const label = date.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' });
@@ -103,7 +109,11 @@ export default function TransactionsPage() {
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
     
-    const weekTx = transactions.filter(tx => new Date(tx.date_real) >= oneWeekAgo && tx.amount < 0);
+    const weekTx = transactions.filter(tx => 
+      new Date(tx.date_real) >= oneWeekAgo && 
+      tx.amount < 0 && 
+      !tx.linked_id // Exclude linked transactions from stats
+    );
     const weekTotal = weekTx.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     
     const days = [0,0,0,0,0,0,0];
