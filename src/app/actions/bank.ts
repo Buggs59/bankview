@@ -154,9 +154,9 @@ export async function syncTransactionsAction() {
                 { regex: /^PAIEMENT PSC\s+\d+\s+/i, t: 'CB' },
                 { regex: /^PAIEMENT PSC\s+/i, t: 'CB' },
                 { regex: /^PAIEMENT CB\s+\d+\s+/i, t: 'CB' },
-                { regex: /^VIR\s+(?:RECU|EMIS|SEPA)?\s*/i, t: 'Virement' },
-                { regex: /^F\s+(?:FRAIS|COMM)\s+/i, t: 'Frais' },
-                { regex: /^PRLV\s+/i, t: 'Prélèvement' },
+                { regex: /^VIR\s+(?:RECU|EMIS|SEPA)?\s*/i, t: 'VIREMENT' },
+                { regex: /^F\s+(?:FRAIS|COMM)\s+/i, t: 'FRAIS' },
+                { regex: /^PRLV\s+/i, t: 'PRÉLÈVEMENT' },
               ];
 
               for (const p of patterns) {

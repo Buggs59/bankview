@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
 import { getCategoriesAction } from '@/app/actions/categories';
-import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, Repeat, Info, FileText } from 'lucide-react';
+import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight } from 'lucide-react';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -201,6 +201,7 @@ export default function TransactionsPage() {
                       {advanceTransactions.map((tx) => {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
+                          const type = getTransactionType(tx.label || '');
                           return (
                               <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
                                   <div className="w-12 h-12 rounded-2xl bg-card border border-accent-yellow/20 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-yellow transition-colors shadow-sm relative overflow-hidden">
@@ -216,14 +217,14 @@ export default function TransactionsPage() {
                                       <div className="flex items-center gap-2">
                                           {tx.transaction_type && (
                                             <div className="shrink-0">
-                                              {tx.transaction_type.startsWith('CB') ? (
+                                              {tx.transaction_type.toUpperCase().startsWith('CB') ? (
                                                 <CreditCard size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type === 'VIREMENT' ? (
-                                                <ArrowRightLeft size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                                <Repeat size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type === 'FRAIS' ? (
-                                                <Info size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
+                                                <ArrowUpRight size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
+                                                <RefreshCw size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
+                                                <CircleDollarSign size={14} className="text-accent-yellow opacity-60" />
                                               ) : null}
                                             </div>
                                           )}
@@ -300,14 +301,14 @@ export default function TransactionsPage() {
                                       <div className="flex items-center gap-2">
                                           {tx.transaction_type && (
                                             <div className="shrink-0">
-                                              {tx.transaction_type.startsWith('CB') ? (
+                                              {tx.transaction_type.toUpperCase().startsWith('CB') ? (
                                                 <CreditCard size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type === 'VIREMENT' ? (
-                                                <ArrowRightLeft size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                                <Repeat size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type === 'FRAIS' ? (
-                                                <Info size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
+                                                <ArrowUpRight size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
+                                                <RefreshCw size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
+                                                <CircleDollarSign size={14} className="text-accent-purple opacity-60" />
                                               ) : null}
                                             </div>
                                           )}
@@ -384,14 +385,14 @@ export default function TransactionsPage() {
                         <div className="flex items-center gap-2">
                             {tx.transaction_type && (
                               <div className="shrink-0">
-                                {tx.transaction_type.startsWith('CB') ? (
+                                {tx.transaction_type.toUpperCase().startsWith('CB') ? (
                                   <CreditCard size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type === 'VIREMENT' ? (
-                                  <ArrowRightLeft size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                  <Repeat size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type === 'FRAIS' ? (
-                                  <Info size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
+                                  <ArrowUpRight size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
+                                  <RefreshCw size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
+                                  <CircleDollarSign size={14} className="text-accent-purple opacity-60" />
                                 ) : null}
                               </div>
                             )}
