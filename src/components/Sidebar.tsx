@@ -10,7 +10,6 @@ const navigation = [
   { name: 'Tendances', href: '/trends', icon: Activity },
   { name: 'Dépenses', href: '/transactions', icon: CreditCard },
   { name: 'Catégories', href: '/categories', icon: LayoutGrid },
-  { name: 'Configuration', href: '/config', icon: Settings },
 ];
 
 export default function Sidebar() {

@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction } from '@/app/actions/bank';
-import { ChevronLeft, ChevronRight, ShoppingCart, Home, Car, Utensils, Heart, Briefcase, Plus, MoreHorizontal } from 'lucide-react';
+import { ChevronLeft, ChevronRight, ShoppingCart, Home, Car, Utensils, Heart, Briefcase, Plus, MoreHorizontal, Settings } from 'lucide-react';
+import Link from 'next/link';
 
 export default function CategoriesPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -84,9 +84,9 @@ export default function CategoriesPage() {
         <div className="order-2 xl:order-1 flex-1 space-y-12 w-full animate-fade-in-up" style={{ animationDelay: '200ms' }}>
             <div className="flex justify-between items-center px-4">
                  <h3 className="text-[#8e8e93] text-sm font-black uppercase tracking-[0.3em] opacity-60">Rapport par Catégorie</h3>
-                 <button className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex items-center justify-center text-[#8e8e93] hover:text-white transition-colors">
-                    <Plus size={20} />
-                 </button>
+                 <Link href="/config" className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex items-center justify-center text-[#8e8e93] hover:text-white transition-colors">
+                    <Settings size={20} />
+                 </Link>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
