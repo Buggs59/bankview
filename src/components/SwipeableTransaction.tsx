@@ -42,19 +42,18 @@ export default function SwipeableTransaction({
   const txDate = new Date(transaction.date_real);
   const isSpending = transaction.amount < 0;
 
-  // Filtrer les catégories par type (dépense ou revenu)
   const relevantCategories = categories.filter(cat => {
     return isSpending ? cat.families?.type === 'expense' : cat.families?.type === 'income';
   });
 
-  // Limiter à 5 catégories pour la roue + 1 bouton "Général"
-  const topCategories = relevantCategories.slice(0, 5);
+  // Ajout du bouton "Général" au début
+  const allOptions = [{ id: null, name: 'GÉNÉRAL' }, ...relevantCategories];
 
   const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x < -50) {
+    if (info.offset.x < -40) {
       setIsSwiped(true);
-      controls.start({ x: -280 });
-    } else {
+      controls.start({ x: -160 });
+    } else if (info.offset.x > 40) {
       setIsSwiped(false);
       controls.start({ x: 0 });
     }
@@ -78,71 +77,42 @@ export default function SwipeableTransaction({
 
   const accentColor = transaction.is_advance ? 'text-accent-yellow' : 'text-accent-purple';
   const accentBorder = transaction.is_advance ? 'border-accent-yellow/20' : 'border-accent-purple/20';
-  const accentBg = transaction.is_advance ? 'bg-accent-yellow/5' : 'bg-accent-purple/5';
   const accentHover = transaction.is_advance ? 'group-hover:border-accent-yellow' : 'group-hover:border-accent-purple/30';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl mb-2 group">
-      {/* Background Wheel / Menu */}
-      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/20 to-transparent flex items-center justify-end pr-4">
-        <div className="flex items-center gap-3">
-          <AnimatePresence>
-            {isSwiped && (
-              <>
-                <motion.button
-                  initial={{ scale: 0, opacity: 0, x: 20 }}
-                  animate={{ scale: 1, opacity: 1, x: 0 }}
-                  exit={{ scale: 0, opacity: 0, x: 20 }}
-                  transition={{ delay: 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                  onClick={() => selectCategory(null)}
-                  className={`w-12 h-12 rounded-full flex items-center justify-center border transition-all ${
-                    !transaction.category_id ? 'bg-accent-purple border-accent-purple text-white shadow-lg' : 'bg-white/5 border-white/10 text-[#8e8e93]'
-                  }`}
-                >
-                  <Tag size={18} />
-                </motion.button>
-
-                {topCategories.map((cat, i) => (
-                  <motion.button
-                    key={cat.id}
-                    initial={{ scale: 0, opacity: 0, x: 20, rotate: -20 }}
-                    animate={{ scale: 1, opacity: 1, x: 0, rotate: 0 }}
-                    exit={{ scale: 0, opacity: 0, x: 20, rotate: -20 }}
-                    transition={{ delay: (i + 1) * 0.05, type: 'spring', stiffness: 300, damping: 20 }}
-                    onClick={() => selectCategory(cat.id)}
-                    className={`w-12 h-12 rounded-full flex flex-col items-center justify-center border transition-all relative group/btn ${
-                      transaction.category_id === cat.id ? 'bg-accent-purple border-accent-purple text-white shadow-lg' : 'bg-white/5 border-white/10 text-[#8e8e93]'
-                    }`}
-                  >
-                    <span className="text-[10px] font-bold truncate w-full px-1 text-center">
-                      {cat.name.substring(0, 3).toUpperCase()}
-                    </span>
-                    {transaction.category_id === cat.id && (
-                      <div className="absolute -top-1 -right-1 bg-accent-green rounded-full p-0.5">
-                        <Check size={8} className="text-white" />
-                      </div>
-                    )}
-                    
-                    {/* Tooltip-like label on hover/active */}
-                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-black/80 text-white text-[8px] font-black uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap z-50 pointer-events-none">
-                      {cat.name}
-                    </div>
-                  </motion.button>
-                ))}
-              </>
-            )}
-          </AnimatePresence>
+    <div className="relative overflow-hidden rounded-2xl mb-2 group h-[88px]">
+      {/* Background Vertical Wheel Picker */}
+      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden">
+        <div className="w-[160px] h-full relative">
+          <div className="absolute inset-0 flex flex-col items-center justify-center py-2 overflow-y-auto scroll-hide snap-y snap-mandatory">
+            {allOptions.map((cat, i) => (
+              <button
+                key={cat.id || 'general'}
+                onClick={() => selectCategory(cat.id as any)}
+                className={`w-full min-h-[34px] flex items-center justify-center px-4 snap-center transition-all duration-300 ${
+                  transaction.category_id === cat.id 
+                    ? 'text-accent-purple font-black scale-110' 
+                    : 'text-[#8e8e93]/50 text-[10px] font-bold hover:text-white'
+                }`}
+              >
+                <span className="truncate uppercase tracking-wider">{cat.name}</span>
+                {transaction.category_id === cat.id && <div className="ml-2 w-1.5 h-1.5 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(140,141,250,0.8)]" />}
+              </button>
+            ))}
+          </div>
+          {/* Overlay for wheel effect */}
+          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-card via-transparent to-card opacity-80" />
         </div>
       </div>
 
       {/* Main Content (Swipeable) */}
       <motion.div
         drag="x"
-        dragConstraints={{ left: -280, right: 0 }}
+        dragConstraints={{ left: -160, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-card border border-white/5 p-4 rounded-2xl flex items-center gap-3 z-10 touch-pan-y active:cursor-grabbing"
+        className="relative bg-card border border-white/5 h-full px-4 flex items-center gap-3 z-10 touch-pan-y active:cursor-grabbing shadow-lg"
       >
         <div className={`w-12 h-12 rounded-2xl bg-card border ${accentBorder} flex flex-col items-center justify-center shrink-0 ${accentHover} transition-colors shadow-sm relative overflow-hidden`}>
             {transaction.is_advance && <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />}
@@ -161,15 +131,10 @@ export default function SwipeableTransaction({
                     {transaction.clean_name || transaction.label}
                 </h4>
             </div>
-            <div className="flex items-center gap-3 mt-1.5">
+            <div className="flex items-center gap-3 mt-1">
                 <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${transaction.category_id ? 'text-accent-purple' : 'text-[#444]'}`}>
-                    {categories.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
+                    {allOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
                 </span>
-                {transaction.is_advance && (
-                    <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
-                        PRÉVU
-                    </span>
-                )}
             </div>
         </div>
 
