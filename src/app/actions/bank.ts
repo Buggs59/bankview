@@ -462,100 +462,92 @@ export async function getTransactionsAction() {
   
   if (!user) return [];
 
-  const { data, error } = await supabase
+  // 1. Get transactions
+  const { data: txs, error } = await supabase
     .from('transactions')
     .select('*, category:categories(*, families(*))')
     .eq('user_id', user.id)
     .order('date_real', { ascending: false });
 
-  if (error) return [];
+  if (error) {
+    console.error("Erreur récupération transactions:", error);
+    return [];
+  }
 
-  // Apply rules to un-categorized transactions
-  const processedTxs = await applyCategoryRules(data || []);
+  // 2. Proactively apply rules to un-categorized transactions
+  const unCategorized = txs?.filter(t => !t.category_id) || [];
+  if (unCategorized.length > 0) {
+    const { data: rules } = await supabase
+      .from('category_rules')
+      .select('*')
+      .eq('user_id', user.id);
 
-  return processedTxs;
-}
-
-async function applyCategoryRules(transactions: any[]) {
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return transactions;
-
-  // 1. Get all rules for this user
-  const { data: rules } = await supabase
-    .from('category_rules')
-    .select('*')
-    .eq('user_id', user.id);
-
-  if (!rules || rules.length === 0) return transactions;
-
-  const unCategorized = transactions.filter(tx => !tx.category_id);
-  if (unCategorized.length === 0) return transactions;
-
-  const updates = [];
-  const updatedTxs = [...transactions];
-
-  for (const tx of unCategorized) {
-    const name = (tx.clean_name || tx.label || '').toLowerCase();
-    const matchingRule = rules.find(r => name.includes(r.pattern.toLowerCase()));
-    
-    if (matchingRule) {
-      // Find index in main array
-      const idx = updatedTxs.findIndex(t => t.id === tx.id);
-      if (idx !== -1) {
-        updatedTxs[idx] = { ...updatedTxs[idx], category_id: matchingRule.category_id };
-        updates.push({ id: tx.id, category_id: matchingRule.category_id });
+    if (rules && rules.length > 0) {
+      for (const tx of unCategorized) {
+        const pattern = tx.clean_name || tx.label;
+        const matchingRule = rules.find(r => r.pattern === pattern);
+        if (matchingRule) {
+          // Apply rule in DB
+          await supabase.from('transactions')
+            .update({ category_id: matchingRule.category_id })
+            .eq('id', tx.id);
+          
+          // Update local object for immediate UI
+          tx.category_id = matchingRule.category_id;
+        }
       }
     }
   }
 
-  // Bulk update in background (don't wait for it to return the results)
-  if (updates.length > 0) {
-    Promise.all(updates.map(u => 
-      supabase.from('transactions').update({ category_id: u.category_id }).eq('id', u.id)
-    )).catch(e => console.error("Error bulk applying rules:", e));
-  }
-
-  return updatedTxs;
+  return txs || [];
 }
 
 export async function updateTransactionCategoryAction(transactionId: string, categoryId: string | null) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { success: false };
+  
+  if (!user) return { error: 'Non connecté' };
 
   // 1. Update the target transaction
-  const { data: tx, error: fetchErr } = await supabase
-    .from('transactions')
-    .select('clean_name, label')
-    .eq('id', transactionId)
-    .single();
-
   const { error } = await supabase
     .from('transactions')
     .update({ category_id: categoryId })
     .eq('id', transactionId)
     .eq('user_id', user.id);
 
-  if (error) return { success: false, error: error.message };
+  if (error) {
+    console.error('Error updating transaction category:', error);
+    return { error: error.message };
+  }
 
-  // 2. Create/Update a rule if category is set
-  if (categoryId && tx) {
-    const pattern = tx.clean_name || tx.label;
-    if (pattern) {
-      await supabase.from('category_rules').upsert({
-        user_id: user.id,
-        pattern: pattern,
-        category_id: categoryId
-      }, { onConflict: 'user_id,pattern' });
-
-      // 3. Apply this rule to all other transactions with same name
-      await supabase
+  // 2. If a category was set, create a rule and apply to others
+  if (categoryId) {
+    try {
+      const { data: tx } = await supabase
         .from('transactions')
-        .update({ category_id: categoryId })
-        .eq('user_id', user.id)
-        .is('category_id', null)
-        .or(`clean_name.ilike.%${pattern}%,label.ilike.%${pattern}%`);
+        .select('clean_name, label')
+        .eq('id', transactionId)
+        .single();
+
+      if (tx) {
+        const pattern = tx.clean_name || tx.label;
+
+        // Create/Update the rule
+        await supabase.from('category_rules').upsert({
+          user_id: user.id,
+          pattern: pattern,
+          category_id: categoryId
+        }, { onConflict: 'user_id, pattern' });
+
+        // Apply to all similar transactions that don't have a category yet
+        await supabase.from('transactions')
+          .update({ category_id: categoryId })
+          .eq('user_id', user.id)
+          .is('category_id', null)
+          .or(`clean_name.eq."${pattern}",label.eq."${pattern}"`);
+      }
+    } catch (e) {
+      console.error("Erreur création de règle:", e);
     }
   }
 
@@ -566,7 +558,7 @@ export async function updateTransactionCategoryAction(transactionId: string, cat
 }
 
 export async function getMatchableTransactionsAction(id: string) {
-  const supabase = await createClient();
+  const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
@@ -607,22 +599,30 @@ export async function linkTransactionsAction(id1: string, id2: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Non connecté' };
 
-  // Update both transactions to point to each other
-  const { error: err1 } = await supabase
+  // 1. Check if either transaction already belongs to a group
+  const { data: txs } = await supabase
     .from('transactions')
-    .update({ linked_id: id2 })
-    .eq('id', id1)
-    .eq('user_id', user.id);
+    .select('id, link_id')
+    .in('id', [id1, id2]);
 
-  const { error: err2 } = await supabase
+  if (!txs || txs.length < 2) return { error: 'Transactions non trouvées' };
+
+  const tx1 = txs.find(t => t.id === id1);
+  const tx2 = txs.find(t => t.id === id2);
+
+  // Use existing group ID or create a new one
+  const newLinkId = tx1?.link_id || tx2?.link_id || crypto.randomUUID();
+
+  // 2. Assign the shared group ID to both
+  const { error } = await supabase
     .from('transactions')
-    .update({ linked_id: id1 })
-    .eq('id', id2)
-    .eq('user_id', user.id);
+    .update({ 
+      link_id: newLinkId,
+      linked_id: id2 // Keep for backward compatibility if needed, but focus on link_id
+    })
+    .in('id', [id1, id2]);
 
-  if (err1 || err2) {
-    return { error: (err1?.message || err2?.message) };
-  }
+  if (error) return { error: error.message };
 
   revalidatePath('/transactions');
   revalidatePath('/dashboard');
@@ -634,29 +634,17 @@ export async function unlinkTransactionAction(transactionId: string) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Non connecté' };
 
-  // 1. Find the linked transaction
-  const { data: current, error: fError } = await supabase
+  // Clear both link_id (group) and linked_id (1-to-1)
+  const { error } = await supabase
     .from('transactions')
-    .select('linked_id')
+    .update({ 
+      link_id: null,
+      linked_id: null 
+    })
     .eq('id', transactionId)
-    .single();
+    .eq('user_id', user.id);
 
-  if (fError || !current) return { error: 'Transaction non trouvée' };
-
-  const linkedId = current.linked_id;
-
-  // 2. Clear linked_id on both
-  const { error: err1 } = await supabase
-    .from('transactions')
-    .update({ linked_id: null })
-    .eq('id', transactionId);
-
-  if (linkedId) {
-    await supabase
-      .from('transactions')
-      .update({ linked_id: null })
-      .eq('id', linkedId);
-  }
+  if (error) return { error: error.message };
 
   revalidatePath('/transactions');
   revalidatePath('/dashboard');

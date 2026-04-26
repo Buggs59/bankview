@@ -3,10 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getBankAccountsAction } from '@/app/actions/accounts';
 import { syncTransactionsAction, getTransactionsAction } from '@/app/actions/bank';
-import { RefreshCcw, ArrowRight, AlertCircle, ShoppingBag, Utensils, Zap, Plus, TrendingUp, PieChart } from 'lucide-react';
+import { RefreshCcw, ArrowRight, AlertCircle, ShoppingBag, Utensils, Zap, Plus } from 'lucide-react';
 import Link from 'next/link';
-import CumulativeChart from '@/components/dashboard/CumulativeChart';
-import FamilyPieChart from '@/components/dashboard/FamilyPieChart';
 
 export default function Home() {
   const [bankAccounts, setBankAccounts] = useState<any[]>([]);
@@ -92,20 +90,36 @@ export default function Home() {
         ))}
       </div>
 
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
-        <div className="xl:col-span-2">
-          <CumulativeChart transactions={transactions} />
-        </div>
-        <div>
-          <FamilyPieChart transactions={transactions} />
-        </div>
-      </div>
-
       {/* Widgets Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 animate-fade-in-up" style={{ animationDelay: '300ms' }}>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         
-        {/* Card 1: Upcoming / Bill */}
+        {/* Card 1: 7 Days Spending */}
+        <Link href="/transactions" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
+          <div className="flex justify-between items-start">
+            <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Analytique</span>
+            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+                <ArrowRight size={16} className="text-[#8e8e93] group-hover:translate-x-1 transition-transform" />
+            </div>
+          </div>
+          <div className="space-y-6">
+            <div className="flex items-center gap-4">
+                <span className="text-4xl font-black text-white tracking-tighter">€342</span>
+                <div className="flex items-center text-[#34d399] text-[10px] font-black bg-[#34d399]/10 px-3 py-1 rounded-full uppercase tracking-widest">
+                    ↓ 12%
+                </div>
+            </div>
+            <div className="flex items-end gap-2 h-20 pt-4">
+                {[30, 50, 40, 70, 45, 90, 60].map((h, i) => (
+                <div key={i} className={`flex-1 rounded-t-lg transition-all duration-700 delay-${i*50} ${i === 5 ? 'bg-accent-purple shadow-[0_0_20px_rgba(140,141,250,0.5)]' : 'bg-[#1a1a1c] group-hover:bg-[#2c2c2e]'}`} style={{ height: `${h}%` }} />
+                ))}
+            </div>
+            <div className="flex justify-between px-1">
+                {['L','M','M','J','V','S','D'].map(d => <span key={d} className="text-[10px] text-[#444] font-black">{d}</span>)}
+            </div>
+          </div>
+        </Link>
+
+        {/* Card 2: Upcoming / Bill */}
         <div className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 border border-white/5 relative overflow-hidden group shadow-2xl">
           <div className="flex justify-between items-start">
             <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Échéances</span>
@@ -115,54 +129,67 @@ export default function Home() {
           </div>
           <div className="space-y-6 relative z-10">
              <div className="space-y-2">
-                <span className="text-white text-xl font-bold block truncate tracking-tight">Flux à venir</span>
+                <span className="text-white text-xl font-bold block truncate tracking-tight">Loyer Mensuel</span>
                 <div className="flex items-center gap-3 text-accent-yellow">
                     <div className="w-2 h-2 rounded-full bg-accent-yellow animate-pulse shadow-[0_0_10px_rgba(255,214,10,0.5)]" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">{advances.length} Opérations</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Aujourd'hui</span>
                 </div>
              </div>
-             <p className="text-4xl font-black text-white tracking-tighter">€{advances.reduce((sum, tx) => sum + Math.abs(tx.amount), 0).toFixed(0)}</p>
+             <p className="text-4xl font-black text-white tracking-tighter">€812.27</p>
           </div>
           <div className="absolute -right-12 -bottom-12 w-40 h-40 bg-accent-yellow/5 rounded-full blur-[80px] group-hover:bg-accent-yellow/10 transition-all duration-1000" />
         </div>
 
-        {/* Card 2: Recent Activity */}
-        <Link href="/transactions" className="xl:col-span-2 bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl overflow-hidden relative">
-          <div className="flex justify-between items-start relative z-10">
-            <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Activité Récente</span>
+        {/* Card 3: Recent Activity */}
+        <Link href="/transactions" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
+          <div className="flex justify-between items-start">
+            <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Flux Récents</span>
             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
                 <ArrowRight size={16} className="text-[#8e8e93] group-hover:translate-x-1 transition-transform" />
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
+          <div className="space-y-6">
             {recentTx.length > 0 ? recentTx.map(tx => (
-              <div key={tx.id} className="space-y-3 p-6 rounded-3xl bg-white/5 border border-white/5">
-                <span className="text-white text-base font-bold block truncate tracking-tight">{tx.label}</span>
+              <div key={tx.id} className="space-y-2">
+                <span className="text-white text-base font-bold block truncate group-hover:text-accent-purple transition-colors tracking-tight">{tx.label}</span>
                 <div className="flex items-center justify-between">
-                    <span className={`text-sm font-black ${tx.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>
-                      {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}€
-                    </span>
-                    <span className="text-[10px] text-[#8e8e93] font-bold uppercase tracking-widest opacity-60">
-                      {new Date(tx.date_real).toLocaleDateString('fr-FR')}
-                    </span>
+                    <span className="text-[#8e8e93] text-xs font-medium opacity-60">€{Math.abs(tx.amount).toFixed(2)}</span>
+                    <span className="text-[10px] text-[#444] font-bold uppercase tracking-widest">Maintenant</span>
                 </div>
               </div>
             )) : <p className="text-[#8e8e93] text-sm italic opacity-40">Aucune activité</p>}
           </div>
-          <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-purple/5 blur-[80px] rounded-full" />
         </Link>
 
-        {/* Card 3: Total Fortune Detail */}
-        <div className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 border border-white/5 relative overflow-hidden group shadow-2xl">
+        {/* Card 4: Top Categories */}
+        <Link href="/categories" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
           <div className="flex justify-between items-start">
-            <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Synthèse</span>
-            <TrendingUp size={18} className="text-[#8e8e93]" />
+            <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Répartition</span>
+            <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+                <ArrowRight size={16} className="text-[#8e8e93] group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
-          <div className="space-y-2">
-            <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest block opacity-60">Solde Moyen</span>
-            <p className="text-3xl font-black text-white tracking-tighter">€{Math.round(totalBalance / (bankAccounts.length || 1))}</p>
+          <div className="space-y-6">
+            <div className="flex items-center gap-5">
+               <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-accent-purple/30 transition-colors shadow-inner">
+                  <ShoppingBag size={20} className="text-[#8e8e93] group-hover:text-accent-purple transition-colors" />
+               </div>
+               <div className="flex flex-col min-w-0 space-y-1">
+                    <span className="text-white text-base font-bold truncate tracking-tight">Alimentation</span>
+                    <span className="text-[#8e8e93] text-xs font-medium opacity-60">€455 ce mois</span>
+               </div>
+            </div>
+            <div className="flex items-center gap-5">
+               <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:border-accent-purple/30 transition-colors shadow-inner">
+                  <Utensils size={20} className="text-[#8e8e93] group-hover:text-accent-purple transition-colors" />
+               </div>
+               <div className="flex flex-col min-w-0 space-y-1">
+                    <span className="text-white text-base font-bold truncate tracking-tight">Restauration</span>
+                    <span className="text-[#8e8e93] text-xs font-medium opacity-60">€205 ce mois</span>
+               </div>
+            </div>
           </div>
-        </div>
+        </Link>
 
       </div>
 

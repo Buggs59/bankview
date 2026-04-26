@@ -93,9 +93,11 @@ export default function SwipeableTransaction({
     const res = await linkTransactionsAction(transaction.id, targetId);
     if (res.success) {
       if (onRefresh) onRefresh();
+      // Don't close modal to allow multiple links if it's a reimbursement
       if (transaction.amount < 0) {
         setShowDetails(false);
       } else {
+        // Refresh matches
         loadMatches();
       }
     } else {
@@ -127,23 +129,25 @@ export default function SwipeableTransaction({
 
   return (
     <div className="relative overflow-hidden rounded-2xl group mb-2">
-      {/* Background Action Layer */}
-      <div className="absolute inset-0 bg-[#1c1c1e] flex items-center justify-end px-6">
-        <div className="flex flex-col items-center gap-2">
-            <span className="text-[9px] font-black text-[#444] uppercase tracking-widest">Modifier Catégorie</span>
+      {/* Background/Action Layer */}
+      <div className="absolute inset-0 bg-[#1c1c1e] flex items-center justify-end px-6 gap-3">
+        <div className="flex flex-col items-center gap-1">
+            <span className="text-[9px] font-black text-[#444] uppercase tracking-widest mb-1">Catégories</span>
             <div className="flex gap-2">
-                {baseOptions.slice(0, 3).map((cat) => (
+                {baseOptions.slice(0, 4).map((cat) => (
                     <button
                         key={cat.id}
                         onClick={() => selectCategory(cat.id)}
-                        className="px-4 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-purple/20 hover:border-accent-purple/30 transition-all text-[10px] font-bold text-white/40 hover:text-white uppercase tracking-tighter max-w-[80px]"
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-purple/20 hover:border-accent-purple/30 transition-all text-white/40 hover:text-white"
+                        title={cat.name}
                     >
-                        <span className="truncate">{cat.name}</span>
+                        <Tag size={18} />
                     </button>
                 ))}
                 <button
                     onClick={() => selectCategory(null)}
                     className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-red/20 hover:border-accent-red/30 transition-all text-white/40 hover:text-white"
+                    title="Général"
                 >
                     <X size={18} />
                 </button>
@@ -151,16 +155,16 @@ export default function SwipeableTransaction({
         </div>
       </div>
 
-      {/* Main Content (Swipeable) */}
+      {/* Main Row Layer */}
       <motion.div
         drag="x"
         dragConstraints={{ left: -280, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-card border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors rounded-2xl z-10"
+        className="relative bg-[#000] border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
       >
-        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner border border-white/5`}>
+        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner`}>
             <span className={`text-lg font-black ${accentColor}`}>
                 {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 0 }).replace('-', '')}
             </span>
@@ -173,29 +177,24 @@ export default function SwipeableTransaction({
                     {transaction.clean_name || transaction.label}
                 </h4>
                 {(transaction.link_id || transaction.linked_id) && <Link2 size={12} className="text-accent-purple shrink-0" />}
-                
                 <button 
-                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     setShowDetails(true);
                   }}
-                  className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[#8e8e93] hover:text-white transition-all shrink-0 ml-1"
+                  className="p-1 hover:bg-white/10 rounded-md transition-colors text-[#8e8e93] hover:text-white"
                 >
                   <Info size={14} />
                 </button>
             </div>
-            <div className="flex items-center gap-2 mt-1.5">
-                <span className="text-[9px] font-black text-[#444] uppercase tracking-[0.2em]">
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-black text-[#444] uppercase tracking-[0.2em]">
                     {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-white/10" />
-                <div className="px-2.5 py-0.5 rounded-full bg-accent-purple/10 border border-accent-purple/20">
-                  <span className="text-[9px] font-black text-accent-purple uppercase tracking-wider">
-                      {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
-                  </span>
-                </div>
+                <span className="text-[10px] font-bold text-accent-purple/60 uppercase">
+                    {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
+                </span>
             </div>
         </div>
 
@@ -211,19 +210,18 @@ export default function SwipeableTransaction({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
           >
             <motion.div 
               initial={{ scale: 0.95, y: 20 }}
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 20 }}
               className="w-full max-w-lg bg-[#1c1c1e] rounded-[40px] border border-white/10 overflow-hidden shadow-2xl"
-              onClick={e => e.stopPropagation()}
             >
               <div className="p-8 space-y-8">
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-4">
-                      <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center border border-white/5`}>
+                      <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center`}>
                         {getIcon(transaction.transaction_type, accentColor)}
                       </div>
                       <div>
@@ -284,7 +282,7 @@ export default function SwipeableTransaction({
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-accent-green text-[10px] font-black uppercase tracking-widest mb-1">Compensé / Annulé</p>
-                              <p className="text-white font-bold text-sm text-balance">Cette opération fait partie d'un groupe de compensation.</p>
+                              <p className="text-white font-bold text-sm">Cette opération fait partie d'un groupe de compensation.</p>
                             </div>
                             <div className="flex gap-2">
                               {transaction.amount > 0 && (
