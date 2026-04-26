@@ -202,7 +202,7 @@ export default function TransactionsPage() {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
                           return (
-                              <div key={tx.id} className="flex items-center gap-6 p-6 rounded-[32px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
+                              <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
                                   <div className="w-12 h-12 rounded-2xl bg-card border border-accent-yellow/20 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-yellow transition-colors shadow-sm relative overflow-hidden">
                                       <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />
                                       <span className="text-[8px] text-accent-yellow font-black uppercase tracking-widest relative z-10">
@@ -214,33 +214,22 @@ export default function TransactionsPage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2">
+                                          {tx.transaction_type && (
+                                            <div className="shrink-0">
+                                              {tx.transaction_type.startsWith('CB') ? (
+                                                <CreditCard size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type === 'VIREMENT' ? (
+                                                <ArrowRightLeft size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                                <Repeat size={14} className="text-accent-yellow opacity-60" />
+                                              ) : tx.transaction_type === 'FRAIS' ? (
+                                                <Info size={14} className="text-accent-yellow opacity-60" />
+                                              ) : null}
+                                            </div>
+                                          )}
                                           <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
                                               {tx.clean_name || tx.label}
                                           </h4>
-                                          {tx.transaction_type && (
-                                            <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
-                                              {tx.transaction_type.startsWith('CB') ? (
-                                                <>
-                                                  <CreditCard size={10} className="text-[#8e8e93]" />
-                                                  {tx.transaction_type.replace('CB', '').trim() && (
-                                                    <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
-                                                      {tx.transaction_type.replace('CB', '').trim()}
-                                                    </span>
-                                                  )}
-                                                </>
-                                              ) : tx.transaction_type === 'VIREMENT' ? (
-                                                <ArrowRightLeft size={10} className="text-[#8e8e93]" />
-                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                                <Repeat size={10} className="text-[#8e8e93]" />
-                                              ) : tx.transaction_type === 'FRAIS' ? (
-                                                <Info size={10} className="text-[#8e8e93]" />
-                                              ) : (
-                                                <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
-                                                  {tx.transaction_type}
-                                                </span>
-                                              )}
-                                            </div>
-                                          )}
                                       </div>
                                       <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
@@ -298,7 +287,7 @@ export default function TransactionsPage() {
                           const txDate = new Date(tx.date_real);
                           const isSpending = tx.amount < 0;
                           return (
-                              <div key={tx.id} className="flex items-center gap-6 p-5 rounded-[32px] hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
+                              <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
                                   <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
                                       <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
                                           {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
@@ -309,33 +298,22 @@ export default function TransactionsPage() {
                                   </div>
                                   <div className="flex-1 min-w-0">
                                       <div className="flex items-center gap-2">
+                                          {tx.transaction_type && (
+                                            <div className="shrink-0">
+                                              {tx.transaction_type.startsWith('CB') ? (
+                                                <CreditCard size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type === 'VIREMENT' ? (
+                                                <ArrowRightLeft size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                                <Repeat size={14} className="text-accent-purple opacity-60" />
+                                              ) : tx.transaction_type === 'FRAIS' ? (
+                                                <Info size={14} className="text-accent-purple opacity-60" />
+                                              ) : null}
+                                            </div>
+                                          )}
                                           <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
                                               {tx.clean_name || tx.label}
                                           </h4>
-                                          {tx.transaction_type && (
-                                            <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
-                                              {tx.transaction_type.startsWith('CB') ? (
-                                                <>
-                                                  <CreditCard size={10} className="text-[#8e8e93]" />
-                                                  {tx.transaction_type.replace('CB', '').trim() && (
-                                                    <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
-                                                      {tx.transaction_type.replace('CB', '').trim()}
-                                                    </span>
-                                                  )}
-                                                </>
-                                              ) : tx.transaction_type === 'VIREMENT' ? (
-                                                <ArrowRightLeft size={10} className="text-[#8e8e93]" />
-                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                                <Repeat size={10} className="text-[#8e8e93]" />
-                                              ) : tx.transaction_type === 'FRAIS' ? (
-                                                <Info size={10} className="text-[#8e8e93]" />
-                                              ) : (
-                                                <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
-                                                  {tx.transaction_type}
-                                                </span>
-                                              )}
-                                            </div>
-                                          )}
                                       </div>
                                       <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
@@ -393,7 +371,7 @@ export default function TransactionsPage() {
                 const txDate = new Date(tx.date_real);
                 const isSpending = tx.amount < 0;
                 return (
-                  <div key={tx.id} className="flex items-center gap-6 p-5 rounded-[32px] hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
+                  <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
                     <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
                         <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
                             {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
@@ -404,33 +382,22 @@ export default function TransactionsPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
+                            {tx.transaction_type && (
+                              <div className="shrink-0">
+                                {tx.transaction_type.startsWith('CB') ? (
+                                  <CreditCard size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type === 'VIREMENT' ? (
+                                  <ArrowRightLeft size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                  <Repeat size={14} className="text-accent-purple opacity-60" />
+                                ) : tx.transaction_type === 'FRAIS' ? (
+                                  <Info size={14} className="text-accent-purple opacity-60" />
+                                ) : null}
+                              </div>
+                            )}
                             <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
                                 {tx.clean_name || tx.label}
                             </h4>
-                            {tx.transaction_type && (
-                              <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
-                                {tx.transaction_type.startsWith('CB') ? (
-                                  <>
-                                    <CreditCard size={10} className="text-[#8e8e93]" />
-                                    {tx.transaction_type.replace('CB', '').trim() && (
-                                      <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
-                                        {tx.transaction_type.replace('CB', '').trim()}
-                                      </span>
-                                    )}
-                                  </>
-                                ) : tx.transaction_type === 'VIREMENT' ? (
-                                  <ArrowRightLeft size={10} className="text-[#8e8e93]" />
-                                ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
-                                  <Repeat size={10} className="text-[#8e8e93]" />
-                                ) : tx.transaction_type === 'FRAIS' ? (
-                                  <Info size={10} className="text-[#8e8e93]" />
-                                ) : (
-                                  <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
-                                    {tx.transaction_type}
-                                  </span>
-                                )}
-                              </div>
-                            )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
                             <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
