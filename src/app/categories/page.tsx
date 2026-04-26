@@ -18,21 +18,53 @@ export default function CategoriesPage() {
 
   const categoriesData = useMemo(() => {
     const isSpending = mode === 'Spent';
-    const filtered = transactions.filter(tx => isSpending ? tx.amount < 0 : tx.amount > 0);
+    const targetType = isSpending ? 'expense' : 'income';
+    
+    // On filtre les transactions par le type de leur famille de catégorie
+    const filtered = transactions.filter(tx => {
+      const familyType = tx.category?.families?.type || (tx.amount < 0 ? 'expense' : 'income');
+      return familyType === targetType;
+    });
     
     const cats: { [key: string]: { name: string, amount: number, icon: any, color: string } } = {};
     
     filtered.forEach(tx => {
-        const name = tx.category?.name || 'Général';
-        if (!cats[name]) {
-            const color = name === 'Courses' ? '#8C8DFA' : name === 'Loisirs' ? '#34D399' : name === 'Logement' ? '#FBBF24' : name === 'Salaire' ? '#34D399' : '#8e8e93';
-            cats[name] = { name, amount: 0, icon: name === 'Courses' ? ShoppingCart : name === 'Loisirs' ? Heart : name === 'Logement' ? Home : name === 'Salaire' ? Briefcase : MoreHorizontal, color };
+        const category = tx.category;
+        const name = category?.name || 'Général';
+        const familyName = category?.families?.name || '';
+        const key = category?.id || 'general';
+
+        if (!cats[key]) {
+            // Mapping des couleurs par défaut ou par famille si possible
+            let color = '#8e8e93';
+            if (category?.families?.name === 'Besoins') color = '#8C8DFA';
+            if (category?.families?.name === 'Envies') color = '#34D399';
+            if (category?.families?.name === 'Revenus') color = '#34D399';
+            
+            // Mapping d'icônes simplifié pour la démo
+            const iconName = category?.icon || 'MoreHorizontal';
+            const IconComponent = getIconByName(iconName);
+
+            cats[key] = { 
+              name: familyName ? `${familyName} : ${name}` : name, 
+              amount: 0, 
+              icon: IconComponent, 
+              color 
+            };
         }
-        cats[name].amount += Math.abs(tx.amount);
+        cats[key].amount += Math.abs(tx.amount);
     });
 
     return Object.values(cats).sort((a, b) => b.amount - a.amount);
   }, [transactions, mode]);
+
+  // Helper pour mapper les noms d'icônes stockés en string
+  function getIconByName(name: string) {
+    const icons: Record<string, any> = {
+      ShoppingCart, Home, Car, Utensils, Heart, Briefcase, Plus, MoreHorizontal
+    };
+    return icons[name] || MoreHorizontal;
+  }
 
   const totalAmount: number = categoriesData.reduce((sum: number, c: any) => sum + (c.amount || 0), 0);
 

@@ -2,6 +2,7 @@
 
 import { redirect } from 'next/navigation';
 
+import { revalidatePath } from 'next/cache';
 import { startAuthorization, getAvailableBanks, createSession, getAccountTransactions, getAccountBalances } from '@/lib/enableBanking';
 
 export async function syncTransactionsAction() {
@@ -419,7 +420,7 @@ export async function getTransactionsAction() {
 
   const { data, error } = await supabase
     .from('transactions')
-    .select('*')
+    .select('*, category:categories(*, families(*))')
     .eq('user_id', user.id)
     .order('date_real', { ascending: false });
 
@@ -429,4 +430,27 @@ export async function getTransactionsAction() {
   }
 
   return data || [];
+}
+
+export async function updateTransactionCategoryAction(transactionId: string, categoryId: string | null) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (!user) return { error: 'Non connecté' };
+
+  const { error } = await supabase
+    .from('transactions')
+    .update({ category_id: categoryId })
+    .eq('id', transactionId)
+    .eq('user_id', user.id);
+
+  if (error) {
+    console.error('Error updating transaction category:', error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/transactions');
+  revalidatePath('/categories');
+  revalidatePath('/dashboard');
+  return { success: true };
 }

@@ -1,20 +1,43 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import { getTransactionsAction } from '@/app/actions/bank';
-import { Search, Calendar, Filter, ArrowUp, ArrowDown } from 'lucide-react';
+import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
+import { getCategoriesAction } from '@/app/actions/categories';
+import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown } from 'lucide-react';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  const [categories, setCategories] = useState<any[]>([]);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+
   useEffect(() => {
-    getTransactionsAction().then(data => {
-      setTransactions(data || []);
-      setLoading(false);
-    });
+    loadData();
   }, []);
+
+  async function loadData() {
+    setLoading(true);
+    const [txData, catData] = await Promise.all([
+      getTransactionsAction(),
+      getCategoriesAction()
+    ]);
+    setTransactions(txData || []);
+    setCategories(catData || []);
+    setLoading(false);
+  }
+
+  const handleUpdateCategory = async (txId: string, catId: string | null) => {
+    setUpdatingId(txId);
+    await updateTransactionCategoryAction(txId, catId);
+    // On pourrait recharger toutes les données, mais pour la fluidité 
+    // on met à jour l'état local si le succès est confirmé
+    setTransactions(prev => prev.map(tx => 
+      tx.id === txId ? { ...tx, category_id: catId, category: categories.find(c => c.id === catId) } : tx
+    ));
+    setUpdatingId(null);
+  };
 
   const advanceTransactions = useMemo(() => 
     transactions.filter(tx => tx.is_advance).sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime()),
@@ -192,9 +215,20 @@ export default function TransactionsPage() {
                                           {tx.label}
                                       </h4>
                                       <div className="flex items-center gap-3 mt-1">
-                                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
-                                              {tx.category?.name || 'Général'}
-                                          </span>
+                                          <div className="relative group/cat">
+                                            <select 
+                                              value={tx.category_id || ''}
+                                              onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
+                                              className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em] outline-none cursor-pointer hover:text-white transition-colors pr-4"
+                                              disabled={updatingId === tx.id}
+                                            >
+                                              <option value="" className="bg-[#1c1c1e]">Général</option>
+                                              {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                              ))}
+                                            </select>
+                                            <ChevronDown size={10} className="absolute right-0 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                          </div>
                                           <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
                                               PRÉVU
                                           </span>
@@ -241,9 +275,20 @@ export default function TransactionsPage() {
                                           {tx.label}
                                       </h4>
                                       <div className="flex items-center gap-3 mt-1">
-                                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
-                                              {tx.category?.name || 'Général'}
-                                          </span>
+                                          <div className="relative group/cat">
+                                            <select 
+                                              value={tx.category_id || ''}
+                                              onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
+                                              className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em] outline-none cursor-pointer hover:text-white transition-colors pr-4"
+                                              disabled={updatingId === tx.id}
+                                            >
+                                              <option value="" className="bg-[#1c1c1e]">Général</option>
+                                              {categories.map(cat => (
+                                                <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                              ))}
+                                            </select>
+                                            <ChevronDown size={10} className="absolute right-0 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                          </div>
                                           {tx.is_advance && (
                                               <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
                                                   Prévu
