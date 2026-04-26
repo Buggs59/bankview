@@ -214,20 +214,23 @@ export default function TransactionsPage() {
                                       <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
                                           {tx.label}
                                       </h4>
-                                      <div className="flex items-center gap-3 mt-1">
+                                      <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
-                                            <select 
-                                              value={tx.category_id || ''}
-                                              onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
-                                              className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em] outline-none cursor-pointer hover:text-white transition-colors pr-4"
-                                              disabled={updatingId === tx.id}
-                                            >
-                                              <option value="" className="bg-[#1c1c1e]">Général</option>
-                                              {categories.map(cat => (
-                                                <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                              ))}
-                                            </select>
-                                            <ChevronDown size={10} className="absolute right-0 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
+                                              <Tag size={10} className="text-accent-yellow opacity-70" />
+                                              <select 
+                                                value={tx.category_id || ''}
+                                                onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
+                                                className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.1em] outline-none cursor-pointer hover:text-white transition-colors pr-4 min-w-[80px]"
+                                                disabled={updatingId === tx.id}
+                                              >
+                                                <option value="" className="bg-[#1c1c1e]">Général</option>
+                                                {categories.map(cat => (
+                                                  <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                                ))}
+                                              </select>
+                                              <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                            </div>
                                           </div>
                                           <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
                                               PRÉVU
@@ -274,20 +277,23 @@ export default function TransactionsPage() {
                                       <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
                                           {tx.label}
                                       </h4>
-                                      <div className="flex items-center gap-3 mt-1">
+                                      <div className="flex items-center gap-3 mt-1.5">
                                           <div className="relative group/cat">
-                                            <select 
-                                              value={tx.category_id || ''}
-                                              onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
-                                              className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em] outline-none cursor-pointer hover:text-white transition-colors pr-4"
-                                              disabled={updatingId === tx.id}
-                                            >
-                                              <option value="" className="bg-[#1c1c1e]">Général</option>
-                                              {categories.map(cat => (
-                                                <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                              ))}
-                                            </select>
-                                            <ChevronDown size={10} className="absolute right-0 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
+                                              <Tag size={10} className="text-accent-purple opacity-70" />
+                                              <select 
+                                                value={tx.category_id || ''}
+                                                onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
+                                                className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.1em] outline-none cursor-pointer hover:text-white transition-colors pr-4 min-w-[80px]"
+                                                disabled={updatingId === tx.id}
+                                              >
+                                                <option value="" className="bg-[#1c1c1e]">Général</option>
+                                                {categories.map(cat => (
+                                                  <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                                ))}
+                                              </select>
+                                              <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
+                                            </div>
                                           </div>
                                           {tx.is_advance && (
                                               <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
