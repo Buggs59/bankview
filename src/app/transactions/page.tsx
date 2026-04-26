@@ -225,9 +225,15 @@ export default function TransactionsPage() {
                                                 disabled={updatingId === tx.id}
                                               >
                                                 <option value="" className="bg-[#1c1c1e]">Général</option>
-                                                {categories.map(cat => (
-                                                  <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                                ))}
+                                                {categories
+                                                  .filter(cat => {
+                                                    const isExpense = tx.amount < 0;
+                                                    return isExpense ? cat.families?.type === 'expense' : cat.families?.type === 'income';
+                                                  })
+                                                  .map(cat => (
+                                                    <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                                  ))
+                                                }
                                               </select>
                                               <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
                                             </div>
@@ -288,9 +294,15 @@ export default function TransactionsPage() {
                                                 disabled={updatingId === tx.id}
                                               >
                                                 <option value="" className="bg-[#1c1c1e]">Général</option>
-                                                {categories.map(cat => (
-                                                  <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                                ))}
+                                                {categories
+                                                  .filter(cat => {
+                                                    const isExpense = tx.amount < 0;
+                                                    return isExpense ? cat.families?.type === 'expense' : cat.families?.type === 'income';
+                                                  })
+                                                  .map(cat => (
+                                                    <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
+                                                  ))
+                                                }
                                               </select>
                                               <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
                                             </div>
