@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
 import { getCategoriesAction } from '@/app/actions/categories';
-import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown } from 'lucide-react';
+import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, Repeat, Info, FileText } from 'lucide-react';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -218,9 +218,28 @@ export default function TransactionsPage() {
                                               {tx.clean_name || tx.label}
                                           </h4>
                                           {tx.transaction_type && (
-                                            <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
-                                              {tx.transaction_type}
-                                            </span>
+                                            <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+                                              {tx.transaction_type.startsWith('CB') ? (
+                                                <>
+                                                  <CreditCard size={10} className="text-[#8e8e93]" />
+                                                  {tx.transaction_type.replace('CB', '').trim() && (
+                                                    <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
+                                                      {tx.transaction_type.replace('CB', '').trim()}
+                                                    </span>
+                                                  )}
+                                                </>
+                                              ) : tx.transaction_type === 'VIREMENT' ? (
+                                                <ArrowRightLeft size={10} className="text-[#8e8e93]" />
+                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                                <Repeat size={10} className="text-[#8e8e93]" />
+                                              ) : tx.transaction_type === 'FRAIS' ? (
+                                                <Info size={10} className="text-[#8e8e93]" />
+                                              ) : (
+                                                <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
+                                                  {tx.transaction_type}
+                                                </span>
+                                              )}
+                                            </div>
                                           )}
                                       </div>
                                       <div className="flex items-center gap-3 mt-1.5">
@@ -294,9 +313,28 @@ export default function TransactionsPage() {
                                               {tx.clean_name || tx.label}
                                           </h4>
                                           {tx.transaction_type && (
-                                            <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
-                                              {tx.transaction_type}
-                                            </span>
+                                            <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+                                              {tx.transaction_type.startsWith('CB') ? (
+                                                <>
+                                                  <CreditCard size={10} className="text-[#8e8e93]" />
+                                                  {tx.transaction_type.replace('CB', '').trim() && (
+                                                    <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
+                                                      {tx.transaction_type.replace('CB', '').trim()}
+                                                    </span>
+                                                  )}
+                                                </>
+                                              ) : tx.transaction_type === 'VIREMENT' ? (
+                                                <ArrowRightLeft size={10} className="text-[#8e8e93]" />
+                                              ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                                <Repeat size={10} className="text-[#8e8e93]" />
+                                              ) : tx.transaction_type === 'FRAIS' ? (
+                                                <Info size={10} className="text-[#8e8e93]" />
+                                              ) : (
+                                                <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
+                                                  {tx.transaction_type}
+                                                </span>
+                                              )}
+                                            </div>
                                           )}
                                       </div>
                                       <div className="flex items-center gap-3 mt-1.5">
@@ -370,9 +408,28 @@ export default function TransactionsPage() {
                                 {tx.clean_name || tx.label}
                             </h4>
                             {tx.transaction_type && (
-                              <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded bg-white/5 text-[#8e8e93] border border-white/5 uppercase tracking-wider">
-                                {tx.transaction_type}
-                              </span>
+                              <div className="shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-white/5 border border-white/5">
+                                {tx.transaction_type.startsWith('CB') ? (
+                                  <>
+                                    <CreditCard size={10} className="text-[#8e8e93]" />
+                                    {tx.transaction_type.replace('CB', '').trim() && (
+                                      <span className="text-[9px] font-bold text-[#8e8e93] leading-none">
+                                        {tx.transaction_type.replace('CB', '').trim()}
+                                      </span>
+                                    )}
+                                  </>
+                                ) : tx.transaction_type === 'VIREMENT' ? (
+                                  <ArrowRightLeft size={10} className="text-[#8e8e93]" />
+                                ) : tx.transaction_type === 'PRÉLÈVEMENT' ? (
+                                  <Repeat size={10} className="text-[#8e8e93]" />
+                                ) : tx.transaction_type === 'FRAIS' ? (
+                                  <Info size={10} className="text-[#8e8e93]" />
+                                ) : (
+                                  <span className="text-[9px] font-black text-[#8e8e93] uppercase tracking-wider">
+                                    {tx.transaction_type}
+                                  </span>
+                                )}
+                              </div>
                             )}
                         </div>
                         <div className="flex items-center gap-3 mt-1">
