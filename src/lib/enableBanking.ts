@@ -139,7 +139,7 @@ export async function getAccountTransactions(accountUid: string, dateFrom?: stri
     allTransactions = allTransactions.concat(pageTransactions);
     
     // Mise à jour du continuation_key pour la page suivante
-    const oldKey = continuationKey;
+    const oldKey: string | null = continuationKey;
     continuationKey = data.continuation_key || null;
     
     console.log(`[PAGE] ${accountUid}: +${pageTransactions.length} txs (Total: ${allTransactions.length}). Key: ${continuationKey ? 'OUI' : 'NON'}`);
