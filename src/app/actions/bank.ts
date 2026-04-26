@@ -468,19 +468,68 @@ export async function getTransactionsAction() {
     .eq('user_id', user.id)
     .order('date_real', { ascending: false });
 
-  if (error) {
-    console.error("Erreur récupération transactions:", error);
-    return [];
+  if (error) return [];
+
+  // Apply rules to un-categorized transactions
+  const processedTxs = await applyCategoryRules(data || []);
+
+  return processedTxs;
+}
+
+async function applyCategoryRules(transactions: any[]) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return transactions;
+
+  // 1. Get all rules for this user
+  const { data: rules } = await supabase
+    .from('category_rules')
+    .select('*')
+    .eq('user_id', user.id);
+
+  if (!rules || rules.length === 0) return transactions;
+
+  const unCategorized = transactions.filter(tx => !tx.category_id);
+  if (unCategorized.length === 0) return transactions;
+
+  const updates = [];
+  const updatedTxs = [...transactions];
+
+  for (const tx of unCategorized) {
+    const name = (tx.clean_name || tx.label || '').toLowerCase();
+    const matchingRule = rules.find(r => name.includes(r.pattern.toLowerCase()));
+    
+    if (matchingRule) {
+      // Find index in main array
+      const idx = updatedTxs.findIndex(t => t.id === tx.id);
+      if (idx !== -1) {
+        updatedTxs[idx] = { ...updatedTxs[idx], category_id: matchingRule.category_id };
+        updates.push({ id: tx.id, category_id: matchingRule.category_id });
+      }
+    }
   }
 
-  return data || [];
+  // Bulk update in background (don't wait for it to return the results)
+  if (updates.length > 0) {
+    Promise.all(updates.map(u => 
+      supabase.from('transactions').update({ category_id: u.category_id }).eq('id', u.id)
+    )).catch(e => console.error("Error bulk applying rules:", e));
+  }
+
+  return updatedTxs;
 }
 
 export async function updateTransactionCategoryAction(transactionId: string, categoryId: string | null) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  
-  if (!user) return { error: 'Non connecté' };
+  if (!user) return { success: false };
+
+  // 1. Update the target transaction
+  const { data: tx, error: fetchErr } = await supabase
+    .from('transactions')
+    .select('clean_name, label')
+    .eq('id', transactionId)
+    .single();
 
   const { error } = await supabase
     .from('transactions')
@@ -488,9 +537,26 @@ export async function updateTransactionCategoryAction(transactionId: string, cat
     .eq('id', transactionId)
     .eq('user_id', user.id);
 
-  if (error) {
-    console.error('Error updating transaction category:', error);
-    return { error: error.message };
+  if (error) return { success: false, error: error.message };
+
+  // 2. Create/Update a rule if category is set
+  if (categoryId && tx) {
+    const pattern = tx.clean_name || tx.label;
+    if (pattern) {
+      await supabase.from('category_rules').upsert({
+        user_id: user.id,
+        pattern: pattern,
+        category_id: categoryId
+      }, { onConflict: 'user_id,pattern' });
+
+      // 3. Apply this rule to all other transactions with same name
+      await supabase
+        .from('transactions')
+        .update({ category_id: categoryId })
+        .eq('user_id', user.id)
+        .is('category_id', null)
+        .or(`clean_name.ilike.%${pattern}%,label.ilike.%${pattern}%`);
+    }
   }
 
   revalidatePath('/transactions');
