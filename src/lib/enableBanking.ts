@@ -130,7 +130,7 @@ export async function getAccountTransactions(accountUid: string, dateFrom?: stri
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error(`ENABLE BANKING TRANSACTIONS ERROR (${accountUid}):`, errorText);
+      console.error(`ENABLE BANKING TRANSACTIONS ERROR (${accountUid}) [HTTP ${response.status}]:`, errorText);
       throw new Error(`Failed to fetch transactions: ${errorText}`);
     }
 
@@ -139,9 +139,14 @@ export async function getAccountTransactions(accountUid: string, dateFrom?: stri
     allTransactions = allTransactions.concat(pageTransactions);
     
     // Mise à jour du continuation_key pour la page suivante
+    const oldKey = continuationKey;
     continuationKey = data.continuation_key || null;
     
-    console.log(`Page reçue pour ${accountUid}: ${pageTransactions.length} txs. Total cumulé: ${allTransactions.length}. Suite: ${!!continuationKey}`);
+    console.log(`[PAGE] ${accountUid}: +${pageTransactions.length} txs (Total: ${allTransactions.length}). Key: ${continuationKey ? 'OUI' : 'NON'}`);
+    if (continuationKey && continuationKey === oldKey) {
+        console.warn("DETECTED SAME CONTINUATION KEY - EXITING LOOP TO PREVENT INFINITE FETCH");
+        break;
+    }
     
   } while (continuationKey);
 

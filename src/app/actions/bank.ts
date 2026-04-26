@@ -65,12 +65,16 @@ export async function syncTransactionsAction() {
         }
 
         // --- 2. Fetch Transactions ---
+        console.log(`FETCHING transactions for ${acc.bank_uid} with dateFrom: ${dateFrom}`);
         const rawTransactions = await getAccountTransactions(acc.bank_uid, dateFrom, userAccessToken);
         
-        console.log(`${rawTransactions.length} transactions récupérées de la banque.`);
+        console.log(`${rawTransactions.length} transactions récupérées au total (après pagination) de la banque.`);
         debugMessages.push(`${acc.name} : ${rawTransactions.length} tx reçues API`);
 
         if (rawTransactions.length > 0) {
+          console.log("FIRST TX DATE:", rawTransactions[0].booking_date || rawTransactions[0].bookingDate || rawTransactions[0].transaction_date);
+          console.log("LAST TX DATE:", rawTransactions[rawTransactions.length - 1].booking_date || rawTransactions[rawTransactions.length - 1].bookingDate || rawTransactions[rawTransactions.length - 1].transaction_date);
+          
           // Log d'une transaction échantillon pour voir la structure réelle en cas de libellé manquant
           console.log("SAMPLE TRANSACTION STRUCTURE:", JSON.stringify(rawTransactions[0]));
 
