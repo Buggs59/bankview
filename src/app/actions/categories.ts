@@ -96,6 +96,22 @@ export async function createCategoryAction(name: string, family_id: string, icon
   return { success: true, data };
 }
 
+export async function updateFamilyAction(id: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('families')
+    .update({ name })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating family:', error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/config');
+  return { success: true };
+}
+
 export async function deleteCategoryAction(id: string) {
   const supabase = await createClient();
   const { error } = await supabase
@@ -105,6 +121,23 @@ export async function deleteCategoryAction(id: string) {
 
   if (error) {
     console.error('Error deleting category:', error);
+    return { error: error.message };
+  }
+
+  revalidatePath('/config');
+  revalidatePath('/categories');
+  return { success: true };
+}
+
+export async function updateCategoryAction(id: string, name: string) {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from('categories')
+    .update({ name })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Error updating category:', error);
     return { error: error.message };
   }
 

@@ -5,11 +5,13 @@ import {
   getFamiliesAction, 
   createFamilyAction, 
   deleteFamilyAction, 
+  updateFamilyAction,
   getCategoriesAction, 
   createCategoryAction, 
-  deleteCategoryAction 
+  deleteCategoryAction,
+  updateCategoryAction
 } from '@/app/actions/categories';
-import { Settings, Plus, Trash2, FolderPlus, Tag, ArrowRight, Wallet, TrendingUp, ChevronRight, Hash } from 'lucide-react';
+import { Settings, Plus, Trash2, FolderPlus, Tag, ArrowRight, Wallet, TrendingUp, ChevronRight, Hash, Pencil, Check } from 'lucide-react';
 
 export default function ConfigPage() {
   const [families, setFamilies] = useState<any[]>([]);
@@ -20,6 +22,12 @@ export default function ConfigPage() {
   const [newFamilyName, setNewFamilyName] = useState('');
   const [newFamilyType, setNewFamilyType] = useState<'expense' | 'income'>('expense');
   const [newCatNames, setNewCatNames] = useState<{[key: string]: string}>({});
+
+  // States pour l'édition
+  const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
+  const [editingFamilyName, setEditingFamilyName] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
 
   useEffect(() => {
     loadData();
@@ -41,6 +49,20 @@ export default function ConfigPage() {
     if (!newFamilyName) return;
     await createFamilyAction(newFamilyName, newFamilyType);
     setNewFamilyName('');
+    loadData();
+  };
+
+  const handleUpdateFamily = async (id: string) => {
+    if (!editingFamilyName) return;
+    await updateFamilyAction(id, editingFamilyName);
+    setEditingFamilyId(null);
+    loadData();
+  };
+
+  const handleUpdateCategory = async (id: string) => {
+    if (!editingCategoryName) return;
+    await updateCategoryAction(id, editingCategoryName);
+    setEditingCategoryId(null);
     loadData();
   };
 
@@ -100,10 +122,34 @@ export default function ConfigPage() {
                     <div key={fam.id} className="bg-card/40 backdrop-blur-md rounded-[48px] border border-white/5 overflow-hidden shadow-2xl">
                         {/* Family Header */}
                         <div className="p-8 flex justify-between items-center bg-white/[0.03] border-b border-white/5">
-                            <div className="flex items-center gap-6">
+                            <div className="flex items-center gap-6 flex-1">
                                 <div className={`w-4 h-4 rounded-full ${fam.type === 'expense' ? 'bg-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.6)]' : 'bg-accent-green shadow-[0_0_15px_rgba(52,211,153,0.6)]'}`} />
-                                <div className="space-y-1">
-                                    <h3 className="text-white text-2xl font-bold tracking-tight">{fam.name}</h3>
+                                <div className="space-y-1 flex-1">
+                                    {editingFamilyId === fam.id ? (
+                                        <div className="flex gap-2">
+                                            <input 
+                                                autoFocus
+                                                value={editingFamilyName}
+                                                onChange={(e) => setEditingFamilyName(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleUpdateFamily(fam.id)}
+                                                className="bg-black/40 border border-accent-purple/30 rounded-xl px-4 py-2 text-white text-2xl font-bold w-full outline-none"
+                                            />
+                                            <button onClick={() => handleUpdateFamily(fam.id)} className="text-accent-green p-2"><Check size={24} /></button>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-4 group/fam">
+                                            <h3 className="text-white text-2xl font-bold tracking-tight">{fam.name}</h3>
+                                            <button 
+                                                onClick={() => {
+                                                    setEditingFamilyId(fam.id);
+                                                    setEditingFamilyName(fam.name);
+                                                }}
+                                                className="opacity-0 group-hover/fam:opacity-100 text-[#444] hover:text-white transition-all"
+                                            >
+                                                <Pencil size={16} />
+                                            </button>
+                                        </div>
+                                    )}
                                     <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em] opacity-40">
                                         {fam.type === 'expense' ? 'Flux Sortant' : 'Flux Entrant'}
                                     </span>
@@ -122,11 +168,35 @@ export default function ConfigPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 {categories.filter(c => c.family_id === fam.id).map(cat => (
                                     <div key={cat.id} className="flex justify-between items-center p-6 rounded-3xl bg-black/40 border border-white/5 group hover:border-white/10 transition-all shadow-inner">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform">
+                                        <div className="flex items-center gap-4 flex-1">
+                                            <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center border border-white/5 group-hover:scale-110 transition-transform shrink-0">
                                                 <Tag size={16} className="text-[#8e8e93] group-hover:text-white" />
                                             </div>
-                                            <span className="text-white text-base font-bold tracking-tight">{cat.name}</span>
+                                            {editingCategoryId === cat.id ? (
+                                                <div className="flex gap-2 flex-1">
+                                                    <input 
+                                                        autoFocus
+                                                        value={editingCategoryName}
+                                                        onChange={(e) => setEditingCategoryName(e.target.value)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleUpdateCategory(cat.id)}
+                                                        className="bg-black/60 border border-accent-purple/30 rounded-lg px-3 py-1 text-white text-sm font-bold w-full outline-none"
+                                                    />
+                                                    <button onClick={() => handleUpdateCategory(cat.id)} className="text-accent-green"><Check size={18} /></button>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-center gap-3 group/cat">
+                                                    <span className="text-white text-base font-bold tracking-tight">{cat.name}</span>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setEditingCategoryId(cat.id);
+                                                            setEditingCategoryName(cat.name);
+                                                        }}
+                                                        className="opacity-0 group-hover/cat:opacity-100 text-[#444] hover:text-white transition-all"
+                                                    >
+                                                        <Pencil size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                         <button 
                                             onClick={() => handleDeleteCategory(cat.id)}
