@@ -43,7 +43,9 @@ export default function TransactionsPage() {
 
   const advanceTransactions = useMemo(() => {
     let filtered = transactions.filter(tx => tx.is_advance);
-    if (selectedCategoryId) {
+    if (selectedCategoryId === 'un-categorized') {
+      filtered = filtered.filter(tx => !tx.category_id);
+    } else if (selectedCategoryId) {
       filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
     }
     return filtered.sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime());
@@ -51,7 +53,9 @@ export default function TransactionsPage() {
 
   const regularTransactions = useMemo(() => {
     let filtered = transactions.filter(tx => !tx.is_advance);
-    if (selectedCategoryId) {
+    if (selectedCategoryId === 'un-categorized') {
+      filtered = filtered.filter(tx => !tx.category_id);
+    } else if (selectedCategoryId) {
       filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
     }
     return filtered;
@@ -179,11 +183,11 @@ export default function TransactionsPage() {
                                 initial={{ opacity: 0, y: 10, scale: 0.95 }}
                                 animate={{ opacity: 1, y: 0, scale: 1 }}
                                 exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                                className="absolute right-0 mt-3 w-72 bg-card/90 backdrop-blur-xl border border-white/10 rounded-[32px] shadow-2xl z-20 overflow-hidden"
+                                className="absolute right-0 mt-3 w-72 bg-[#1c1c1e] border border-white/10 rounded-[32px] shadow-2xl z-20 overflow-hidden"
                             >
                                 <div className="p-4 border-b border-white/5 flex justify-between items-center bg-white/5">
                                     <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em] ml-2">Filtrer par catégorie</span>
-                                    {selectedCategoryId && (
+                                    {(selectedCategoryId || selectedCategoryId === 'un-categorized') && (
                                         <button 
                                             onClick={() => {
                                                 setSelectedCategoryId(null);
@@ -206,6 +210,20 @@ export default function TransactionsPage() {
                                         TOUTES LES OPÉRATIONS
                                         {!selectedCategoryId && <Check size={16} className="text-accent-purple" />}
                                     </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setSelectedCategoryId('un-categorized');
+                                            setShowFilterMenu(false);
+                                        }}
+                                        className={`w-full text-left px-6 py-4 text-sm font-bold transition-colors flex items-center justify-between group ${selectedCategoryId === 'un-categorized' ? 'text-white bg-accent-purple/10' : 'text-[#8e8e93] hover:text-white hover:bg-white/5'}`}
+                                    >
+                                        GÉNÉRAL (NON CLASSÉ)
+                                        {selectedCategoryId === 'un-categorized' && <Check size={16} className="text-accent-purple" />}
+                                    </button>
+
+                                    <div className="h-px bg-white/5 mx-6 my-1" />
+
                                     {sortedCategories.map(cat => (
                                         <button
                                             key={cat.id}
