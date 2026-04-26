@@ -558,7 +558,7 @@ export async function updateTransactionCategoryAction(transactionId: string, cat
 }
 
 export async function getMatchableTransactionsAction(id: string) {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
