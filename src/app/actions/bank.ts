@@ -36,7 +36,7 @@ export async function syncTransactionsAction() {
     await supabase.from('transactions').delete().eq('user_id', user.id).eq('is_advance', true);
 
     let totalImported = 0;
-    const rangeInDays = 729; // Récupérer 2 ans d'historique si possible
+    const rangeInDays = 3650; // Récupérer jusqu'à 10 ans d'historique si la banque le permet
     const historyDate = new Date();
     historyDate.setDate(historyDate.getDate() - rangeInDays);
     const dateFrom = historyDate.toISOString().split('T')[0];

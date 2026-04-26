@@ -104,30 +104,48 @@ export async function createSession(code: string) {
 export async function getAccountTransactions(accountUid: string, dateFrom?: string, accessToken?: string) {
   // On utilise le jeton d'accès utilisateur s'il est fourni, sinon on retombe sur le token APP
   const token = accessToken || await getEnableBankingToken();
+  let allTransactions: any[] = [];
+  let continuationKey: string | null = null;
   
-  let url = `${ENABLE_BANKING_API_URL}/accounts/${accountUid}/transactions`;
-  if (dateFrom) {
-    url += `?date_from=${dateFrom}`;
-  }
+  do {
+    let url = `${ENABLE_BANKING_API_URL}/accounts/${accountUid}/transactions`;
+    const params = new URLSearchParams();
+    if (dateFrom) params.append('date_from', dateFrom);
+    if (continuationKey) params.append('continuation_key', continuationKey);
+    // On demande explicitement l'historique le plus long disponible
+    params.append('strategy', 'longest');
 
-  console.log(`Appel Enable Banking Transactions: ${url} (Token type: ${accessToken ? 'USER' : 'APP'})`);
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
 
-  const response = await fetch(url, {
-    method: 'GET',
-    headers: {
-      'Authorization': `Bearer ${token}`,
-    },
-  });
+    console.log(`Appel Enable Banking Transactions: ${url} (Token type: ${accessToken ? 'USER' : 'APP'})`);
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    console.error(`ENABLE BANKING TRANSACTIONS ERROR (${accountUid}):`, errorText);
-    throw new Error(`Failed to fetch transactions: ${errorText}`);
-  }
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
 
-  const data = await response.json();
-  console.log(`Transactions reçues pour ${accountUid}: ${data.transactions?.length || 0}`);
-  return data.transactions || [];
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error(`ENABLE BANKING TRANSACTIONS ERROR (${accountUid}):`, errorText);
+      throw new Error(`Failed to fetch transactions: ${errorText}`);
+    }
+
+    const data = await response.json();
+    const pageTransactions = data.transactions || [];
+    allTransactions = allTransactions.concat(pageTransactions);
+    
+    // Mise à jour du continuation_key pour la page suivante
+    continuationKey = data.continuation_key || null;
+    
+    console.log(`Page reçue pour ${accountUid}: ${pageTransactions.length} txs. Total cumulé: ${allTransactions.length}. Suite: ${!!continuationKey}`);
+    
+  } while (continuationKey);
+
+  return allTransactions;
 }
 
 export async function getAccountBalances(accountUid: string, accessToken?: string) {
