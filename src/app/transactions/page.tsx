@@ -304,6 +304,7 @@ export default function TransactionsPage() {
                           transaction={tx}
                           categories={categories}
                           onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                          onRefresh={loadData}
                           updatingId={updatingId}
                         />
                       ))}
@@ -328,6 +329,7 @@ export default function TransactionsPage() {
                           transaction={tx}
                           categories={categories}
                           onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                          onRefresh={loadData}
                           updatingId={updatingId}
                         />
                       ))}
@@ -350,6 +352,7 @@ export default function TransactionsPage() {
                   transaction={tx}
                   categories={categories}
                   onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                  onRefresh={loadData}
                   updatingId={updatingId}
                 />
               ))}

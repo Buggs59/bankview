@@ -32,6 +32,7 @@ interface SwipeableTransactionProps {
   transaction: Transaction;
   categories: Category[];
   onSelectCategory: (categoryId: string | null) => void;
+  onRefresh?: () => void;
   updatingId?: string | null;
 }
 
@@ -39,6 +40,7 @@ export default function SwipeableTransaction({
   transaction, 
   categories, 
   onSelectCategory,
+  onRefresh,
   updatingId 
 }: SwipeableTransactionProps) {
   const [showDetails, setShowDetails] = useState(false);
@@ -121,6 +123,7 @@ export default function SwipeableTransaction({
     setIsLinking(true);
     const res = await linkTransactionsAction(transaction.id, targetId);
     if (res.success) {
+      if (onRefresh) onRefresh();
       setShowDetails(false);
     } else {
       alert(res.error);
@@ -132,6 +135,7 @@ export default function SwipeableTransaction({
     setIsLinking(true);
     const res = await unlinkTransactionAction(transaction.id);
     if (res.success) {
+      if (onRefresh) onRefresh();
       setShowDetails(false);
     } else {
       alert(res.error);
