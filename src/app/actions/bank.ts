@@ -499,34 +499,32 @@ export async function updateTransactionCategoryAction(transactionId: string, cat
   return { success: true };
 }
 
-export async function getMatchableTransactionsAction(transactionId: string) {
-  const supabase = await createClient();
+export async function getMatchableTransactionsAction(id: string) {
+  const supabase = createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
   // 1. Get the source transaction
-  const { data: source, error: sError } = await supabase
+  const { data: tx } = await supabase
     .from('transactions')
     .select('*')
-    .eq('id', transactionId)
+    .eq('id', id)
     .single();
 
-  if (sError || !source) return [];
+  if (!tx) return [];
 
   // 2. Find transactions with opposite sign and similar amount (+/- 20%)
-  // Range: amount * -1, from 0.8 * abs to 1.2 * abs
-  const targetAmount = -source.amount;
-  const minAmount = Math.min(targetAmount * 0.8, targetAmount * 1.2);
-  const maxAmount = Math.max(targetAmount * 0.8, targetAmount * 1.2);
+  const minAmount = -tx.amount * 1.2;
+  const maxAmount = -tx.amount * 0.8;
+  
+  // Logic: if tx is credit (positive), look for debits (negative)
+  // If tx is debit (negative), look for credits (positive)
+  const isCredit = tx.amount > 0;
 
   const { data, error } = await supabase
     .from('transactions')
     .select('*, category:categories(name)')
     .eq('user_id', user.id)
-    .neq('id', transactionId)
-    .is('linked_id', null)
-    .gte('amount', minAmount)
-    .lte('amount', maxAmount)
     .order('date_real', { ascending: false })
     .limit(10);
 

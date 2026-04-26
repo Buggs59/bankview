@@ -49,7 +49,7 @@ export default function TransactionsPage() {
       filtered = filtered.filter(tx => tx.category_id === selectedCategoryId);
     }
     // Only exclude if it is linked to something
-    filtered = filtered.filter(tx => !tx.linked_id);
+    filtered = filtered.filter(tx => !tx.link_id && !tx.linked_id);
     return filtered.sort((a, b) => new Date(a.date_real).getTime() - new Date(b.date_real).getTime());
   }, [transactions, selectedCategoryId]);
 
@@ -77,7 +77,7 @@ export default function TransactionsPage() {
     
     filteredRegularTransactions.forEach(tx => {
       // Exclude linked transactions from the monthly totals
-      if (tx.linked_id) return;
+      if (tx.link_id || tx.linked_id) return;
 
       const date = new Date(tx.date_real);
       const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -112,7 +112,7 @@ export default function TransactionsPage() {
     const weekTx = transactions.filter(tx => 
       new Date(tx.date_real) >= oneWeekAgo && 
       tx.amount < 0 && 
-      !tx.linked_id // Exclude linked transactions from stats
+      !tx.link_id && !tx.linked_id // Exclude linked transactions from stats
     );
     const weekTotal = weekTx.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
     

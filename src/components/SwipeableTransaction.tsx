@@ -25,6 +25,7 @@ interface Transaction {
   category_id?: string | null;
   is_advance?: boolean;
   linked_id?: string | null;
+  link_id?: string | null;
   category?: { name: string };
 }
 
@@ -52,49 +53,17 @@ export default function SwipeableTransaction({
   const controls = useAnimationControls();
   const txDate = new Date(transaction.date_real);
   const isSpending = transaction.amount < 0;
+  
+  const accentColor = isSpending ? 'text-accent-red' : 'text-accent-green';
+  const bgColor = isSpending ? 'bg-accent-red/10' : 'bg-accent-green/10';
 
-  const relevantCategories = categories
-    .filter(cat => isSpending ? cat.families?.type === 'expense' : cat.families?.type === 'income')
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Ajout du bouton "Général" et répétition pour l'effet infini
-  const baseOptions = [{ id: null, name: 'GÉNÉRAL' }, ...relevantCategories];
-  // On répète la liste pour simuler l'infini
-  const allOptions = [...baseOptions, ...baseOptions, ...baseOptions];
-
-  const scrollRef = useRef<HTMLDivElement>(null);
-
-  // Centrer sur l'item sélectionné au montage ou quand on swipe
-  useEffect(() => {
-    if (isSwiped && scrollRef.current) {
-      const index = baseOptions.findIndex(o => o.id === transaction.category_id);
-      if (index !== -1) {
-        // On se place sur la répétition du milieu
-        const targetIndex = baseOptions.length + index;
-        const targetScroll = targetIndex * 36 - (88 / 2 - 36 / 2);
-        scrollRef.current.scrollTop = targetScroll;
-      }
-    }
-  }, [isSwiped, transaction.category_id, baseOptions.length]);
-
-  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-    const el = e.currentTarget;
-    const itemHeight = 36;
-    const listHeight = baseOptions.length * itemHeight;
-
-    // Boucle infinie simple
-    if (el.scrollTop < listHeight - 100) {
-      el.scrollTop += listHeight;
-    } else if (el.scrollTop > listHeight * 2) {
-      el.scrollTop -= listHeight;
-    }
-  };
+  const baseOptions = categories;
 
   const handleDragEnd = (event: any, info: any) => {
-    if (info.offset.x < -40) {
+    if (info.offset.x < -100) {
       setIsSwiped(true);
-      controls.start({ x: -160 });
-    } else if (info.offset.x > 40) {
+      controls.start({ x: -280 });
+    } else {
       setIsSwiped(false);
       controls.start({ x: 0 });
     }
@@ -107,10 +76,10 @@ export default function SwipeableTransaction({
   };
 
   useEffect(() => {
-    if (showDetails && !transaction.linked_id) {
+    if (showDetails && !transaction.link_id) {
       loadMatches();
     }
-  }, [showDetails, transaction.linked_id]);
+  }, [showDetails, transaction.link_id]);
 
   async function loadMatches() {
     setLoadingMatches(true);
@@ -124,7 +93,13 @@ export default function SwipeableTransaction({
     const res = await linkTransactionsAction(transaction.id, targetId);
     if (res.success) {
       if (onRefresh) onRefresh();
-      setShowDetails(false);
+      // Don't close modal to allow multiple links if it's a reimbursement
+      if (transaction.amount < 0) {
+        setShowDetails(false);
+      } else {
+        // Refresh matches
+        loadMatches();
+      }
     } else {
       alert(res.error);
     }
@@ -146,167 +121,140 @@ export default function SwipeableTransaction({
   const getIcon = (type?: string, color: string = 'text-accent-purple') => {
     if (!type) return null;
     const t = type.toUpperCase();
-    if (t.startsWith('CB')) return <CreditCard size={14} className={`${color} opacity-60`} />;
-    if (t === 'VIREMENT') return <ArrowUpRight size={14} className={`${color} opacity-60`} />;
-    if (t === 'PRÉLÈVEMENT') return <RefreshCw size={14} className={`${color} opacity-60`} />;
-    if (t === 'FRAIS') return <CircleDollarSign size={14} className={`${color} opacity-60`} />;
-    return null;
+    if (t.includes('CB') || t.includes('CARTE')) return <CreditCard size={14} className={color} />;
+    if (t.includes('VIR')) return <ArrowUpRight size={14} className={color} />;
+    if (t.includes('PRLV')) return <RefreshCw size={14} className={color} />;
+    return <CircleDollarSign size={14} className={color} />;
   };
 
-  const accentColor = transaction.is_advance ? 'text-accent-yellow' : 'text-accent-purple';
-  const accentBorder = transaction.is_advance ? 'border-accent-yellow/20' : 'border-accent-purple/20';
-  const accentHover = transaction.is_advance ? 'group-hover:border-accent-yellow' : 'group-hover:border-accent-purple/30';
-
   return (
-    <div className="relative overflow-visible rounded-2xl mb-2 group h-[88px]">
-      {/* Background Vertical Wheel Picker */}
-      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden rounded-2xl">
-        <div className="w-[160px] h-full relative">
-          <div 
-            ref={scrollRef}
-            onScroll={handleScroll}
-            className="absolute inset-0 flex flex-col py-[26px] overflow-y-auto scroll-hide snap-y snap-mandatory"
-          >
-            {allOptions.map((cat, i) => (
-              <button
-                key={`${cat.id || 'gen'}-${i}`}
-                onClick={() => selectCategory(cat.id as any)}
-                className={`w-full min-h-[36px] flex items-center justify-center px-4 snap-center transition-all duration-300 relative ${
-                  transaction.category_id === cat.id 
-                    ? 'text-accent-purple font-black scale-110' 
-                    : 'text-[#8e8e93]/60 text-[11px] font-bold hover:text-white'
-                }`}
-              >
-                <span className="truncate uppercase tracking-wider text-center">{cat.name}</span>
-                {transaction.category_id === cat.id && (
-                  <div className="absolute right-3 w-1.5 h-1.5 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(140,141,250,0.8)]" />
-                )}
-              </button>
-            ))}
-          </div>
-          {/* Overlay for wheel effect - Darker at edges for depth */}
-          <div className="absolute top-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-b from-card to-transparent z-20" />
-          <div className="absolute bottom-0 left-0 right-0 h-[30px] pointer-events-none bg-gradient-to-t from-card to-transparent z-20" />
-          {/* Center highlight area */}
-          <div className="absolute top-1/2 left-4 right-4 h-[36px] -translate-y-1/2 border-y border-white/5 pointer-events-none" />
+    <div className="relative overflow-hidden rounded-2xl group mb-2">
+      {/* Background/Action Layer */}
+      <div className="absolute inset-0 bg-[#1c1c1e] flex items-center justify-end px-6 gap-3">
+        <div className="flex flex-col items-center gap-1">
+            <span className="text-[9px] font-black text-[#444] uppercase tracking-widest mb-1">Catégories</span>
+            <div className="flex gap-2">
+                {baseOptions.slice(0, 4).map((cat) => (
+                    <button
+                        key={cat.id}
+                        onClick={() => selectCategory(cat.id)}
+                        className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-purple/20 hover:border-accent-purple/30 transition-all text-white/40 hover:text-white"
+                        title={cat.name}
+                    >
+                        <Tag size={18} />
+                    </button>
+                ))}
+                <button
+                    onClick={() => selectCategory(null)}
+                    className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-accent-red/20 hover:border-accent-red/30 transition-all text-white/40 hover:text-white"
+                    title="Général"
+                >
+                    <X size={18} />
+                </button>
+            </div>
         </div>
       </div>
 
-      {/* Main Content (Swipeable) */}
+      {/* Main Row Layer */}
       <motion.div
         drag="x"
-        dragConstraints={{ left: -160, right: 0 }}
+        dragConstraints={{ left: -280, right: 0 }}
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-card border border-white/5 h-full px-4 flex items-center gap-3 z-10 touch-pan-y active:cursor-grabbing shadow-lg rounded-2xl"
+        className="relative bg-[#000] border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
       >
-        <div className={`w-12 h-12 rounded-2xl bg-card border ${accentBorder} flex flex-col items-center justify-center shrink-0 ${accentHover} transition-colors shadow-sm relative overflow-hidden`}>
-            {transaction.is_advance && <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />}
-            <span className={`text-[8px] ${transaction.is_advance ? 'text-accent-yellow' : 'text-[#8e8e93]'} font-black uppercase tracking-widest relative z-10`}>
-                {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
-            </span>
-            <span className="text-base text-white font-bold leading-none relative z-10">
-                {txDate.getDate()}
+        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner`}>
+            <span className={`text-lg font-black ${accentColor}`}>
+                {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 0 }).replace('-', '')}
             </span>
         </div>
-        
+
         <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2">
                 {getIcon(transaction.transaction_type, accentColor)}
-                <h4 className={`text-[15px] font-semibold truncate transition-colors ${transaction.linked_id ? 'text-[#8e8e93]' : 'text-white group-hover:text-accent-purple'}`}>
+                <h4 className={`text-[15px] font-semibold truncate transition-colors ${(transaction.link_id || transaction.linked_id) ? 'text-[#8e8e93]' : 'text-white group-hover:text-accent-purple'}`}>
                     {transaction.clean_name || transaction.label}
                 </h4>
-                {transaction.linked_id && <Link2 size={12} className="text-accent-purple shrink-0" />}
+                {(transaction.link_id || transaction.linked_id) && <Link2 size={12} className="text-accent-purple shrink-0" />}
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
                     setShowDetails(true);
                   }}
-                  className="p-1 text-[#444] hover:text-accent-purple transition-colors shrink-0"
+                  className="p-1 hover:bg-white/10 rounded-md transition-colors text-[#8e8e93] hover:text-white"
                 >
                   <Info size={14} />
                 </button>
             </div>
-            <div className="flex items-center gap-3 mt-1">
-                <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${transaction.category_id ? 'text-accent-purple' : 'text-[#444]'}`}>
+            <div className="flex items-center gap-2 mt-1">
+                <span className="text-[10px] font-black text-[#444] uppercase tracking-[0.2em]">
+                    {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+                </span>
+                <span className="w-1 h-1 rounded-full bg-white/10" />
+                <span className="text-[10px] font-bold text-accent-purple/60 uppercase">
                     {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
                 </span>
             </div>
         </div>
 
-        <div className="text-right shrink-0">
-            <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
-                {isSpending ? '' : '+'}{Math.abs(transaction.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
-            </p>
-            {isSwiped && (
-               <motion.div 
-                 initial={{ opacity: 0, x: 10 }}
-                 animate={{ opacity: 1, x: 0 }}
-                 className="flex items-center justify-end text-accent-purple mt-1"
-               >
-                 <ChevronRight size={14} className="animate-bounce-x" />
-               </motion.div>
-            )}
+        <div className="flex items-center gap-3">
+            <ChevronRight size={16} className="text-[#222] group-hover:text-accent-purple transition-colors" />
         </div>
       </motion.div>
 
-      {/* Details Modal */}
-      {typeof document !== 'undefined' && createPortal(
-        <AnimatePresence>
-          {showDetails && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[9999] flex items-center justify-center p-4"
-              onClick={() => setShowDetails(false)}
+      {/* Detail Modal */}
+      <AnimatePresence>
+        {showDetails && createPortal(
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm"
+          >
+            <motion.div 
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="w-full max-w-lg bg-[#1c1c1e] rounded-[40px] border border-white/10 overflow-hidden shadow-2xl"
             >
-              <motion.div
-                initial={{ scale: 0.9, opacity: 0, y: 20 }}
-                animate={{ scale: 1, opacity: 1, y: 0 }}
-                exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                className="bg-card border border-white/10 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="p-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className={`p-3 rounded-2xl bg-white/5 border ${accentBorder}`}>
+              <div className="p-8 space-y-8">
+                  <div className="flex justify-between items-start">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl ${bgColor} flex items-center justify-center`}>
                         {getIcon(transaction.transaction_type, accentColor)}
                       </div>
                       <div>
-                        <h3 className="text-white font-bold text-lg leading-tight">Détails de l'opération</h3>
-                        <p className="text-[#8e8e93] text-sm">{txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                        <h2 className="text-2xl font-bold text-white">Détails de l'opération</h2>
+                        <p className="text-[#8e8e93] text-sm uppercase font-black tracking-widest mt-1">
+                          {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                        </p>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => setShowDetails(false)}
-                      className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-[#8e8e93] transition-colors"
-                    >
+                    <button onClick={() => setShowDetails(false)} className="p-3 bg-white/5 rounded-2xl text-[#8e8e93] hover:text-white transition-colors">
                       <X size={20} />
                     </button>
                   </div>
 
-                  <div className="space-y-4">
-                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Libellé Nettoyé</p>
-                      <p className="text-white font-semibold">{transaction.clean_name || 'Non défini'}</p>
+                  <div className="space-y-6">
+                    <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
+                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-2">Libellé Nettoyé</p>
+                      <p className="text-xl font-bold text-white leading-tight">{transaction.clean_name || transaction.label}</p>
                     </div>
 
-                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Dénomination Bancaire (Brut)</p>
-                      <p className="text-white/60 font-mono text-xs break-all leading-relaxed italic">{transaction.label}</p>
+                    <div className="bg-white/5 p-4 rounded-3xl border border-white/5">
+                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-2">Dénomination bancaire (Brut)</p>
+                      <p className="text-xs font-mono text-[#8e8e93] break-all">{transaction.label}</p>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                        <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Type</p>
-                        <p className="text-white font-semibold">{transaction.transaction_type || 'Inconnu'}</p>
+                      <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
+                        <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-2">Type</p>
+                        <p className="text-lg font-bold text-white">{transaction.transaction_type || 'Inconnu'}</p>
                       </div>
-                      <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
-                        <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Montant</p>
-                        <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                      <div className="bg-white/5 p-6 rounded-3xl border border-white/5">
+                        <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-2">Montant</p>
+                        <p className={`text-2xl font-black ${accentColor}`}>
                           {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
                         </p>
                       </div>
@@ -326,27 +274,41 @@ export default function SwipeableTransaction({
                     <div className="space-y-4 pt-2 border-t border-white/5">
                       <div className="flex items-center gap-2 mb-2">
                         <Link2 size={14} className="text-accent-purple" />
-                        <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">Compensation</span>
+                        <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-[0.2em]">Compensation Multi-liens</span>
                       </div>
 
-                      {transaction.linked_id ? (
+                      {(transaction.link_id || transaction.linked_id) ? (
                         <div className="bg-accent-green/10 border border-accent-green/20 p-4 rounded-2xl">
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="text-accent-green text-[10px] font-black uppercase tracking-widest mb-1">Compensé / Annulé</p>
-                              <p className="text-white font-bold text-sm">Opération liée et exclue des calculs.</p>
+                              <p className="text-white font-bold text-sm">Cette opération fait partie d'un groupe de compensation.</p>
                             </div>
-                            <button 
-                              onClick={handleUnlink}
-                              disabled={isLinking}
-                              className="p-3 bg-accent-red/10 text-accent-red rounded-xl hover:bg-accent-red/20 transition-all disabled:opacity-50"
-                              title="Dissocier"
-                            >
-                              <Unlink size={18} />
-                            </button>
+                            <div className="flex gap-2">
+                              {transaction.amount > 0 && (
+                                <button 
+                                  onClick={() => loadMatches()}
+                                  className="p-3 bg-accent-purple/10 text-accent-purple rounded-xl hover:bg-accent-purple/20 transition-all"
+                                  title="Ajouter une autre dépense"
+                                >
+                                  <Link size={18} />
+                                </button>
+                              )}
+                              <button 
+                                onClick={handleUnlink}
+                                disabled={isLinking}
+                                className="p-3 bg-accent-red/10 text-accent-red rounded-xl hover:bg-accent-red/20 transition-all disabled:opacity-50"
+                                title="Dissocier"
+                              >
+                                <Unlink size={18} />
+                              </button>
+                            </div>
                           </div>
                         </div>
-                      ) : (
+                      ) : null}
+
+                      {/* Matching Section */}
+                      {(!(transaction.link_id || transaction.linked_id) || (transaction.amount > 0 && potentialMatches.length > 0)) && (
                         <div className="space-y-3">
                           {loadingMatches ? (
                             <div className="py-4 flex justify-center">
@@ -354,7 +316,9 @@ export default function SwipeableTransaction({
                             </div>
                           ) : potentialMatches.length > 0 ? (
                             <div className="space-y-2">
-                              <p className="text-[10px] text-[#444] font-bold uppercase mb-2">Correspondances suggérées :</p>
+                              <p className="text-[10px] text-[#444] font-bold uppercase mb-2">
+                                {transaction.amount > 0 ? 'Lier à une dépense supplémentaire :' : 'Correspondances suggérées :'}
+                              </p>
                               {potentialMatches.map(m => (
                                 <button
                                   key={m.id}
@@ -378,7 +342,7 @@ export default function SwipeableTransaction({
                               ))}
                             </div>
                           ) : (
-                            <p className="text-xs text-[#444] italic text-center py-2">Aucun remboursement correspondant trouvé.</p>
+                            !(transaction.link_id || transaction.linked_id) && <p className="text-xs text-[#444] italic text-center py-2">Aucun remboursement correspondant trouvé.</p>
                           )}
                         </div>
                       )}
@@ -387,18 +351,16 @@ export default function SwipeableTransaction({
 
                   <button 
                     onClick={() => setShowDetails(false)}
-                    className="w-full mt-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-[#e5e5e5] transition-colors"
+                    className="w-full py-5 bg-white text-black font-black rounded-3xl hover:bg-[#eee] active:scale-[0.98] transition-all uppercase tracking-widest text-sm"
                   >
                     Fermer
                   </button>
-                </div>
-              </motion.div>
+              </div>
             </motion.div>
-          )}
-        </AnimatePresence>,
-        document.body
-      )}
-
+          </motion.div>,
+          document.body
+        )}
+      </AnimatePresence>
     </div>
   );
 }
