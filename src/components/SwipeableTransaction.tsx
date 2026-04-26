@@ -89,19 +89,24 @@ export default function SwipeableTransaction({
               <button
                 key={cat.id || 'general'}
                 onClick={() => selectCategory(cat.id as any)}
-                className={`w-full min-h-[34px] flex items-center justify-center px-4 snap-center transition-all duration-300 ${
+                className={`w-full min-h-[36px] flex items-center justify-center px-4 snap-center transition-all duration-300 ${
                   transaction.category_id === cat.id 
                     ? 'text-accent-purple font-black scale-110' 
-                    : 'text-[#8e8e93]/50 text-[10px] font-bold hover:text-white'
+                    : 'text-[#8e8e93]/60 text-[11px] font-bold hover:text-white'
                 }`}
               >
-                <span className="truncate uppercase tracking-wider">{cat.name}</span>
-                {transaction.category_id === cat.id && <div className="ml-2 w-1.5 h-1.5 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(140,141,250,0.8)]" />}
+                <span className="truncate uppercase tracking-wider text-center">{cat.name}</span>
+                {transaction.category_id === cat.id && (
+                  <div className="absolute right-3 w-1.5 h-1.5 bg-accent-purple rounded-full shadow-[0_0_8px_rgba(140,141,250,0.8)]" />
+                )}
               </button>
             ))}
+            {/* Padding buttons to allow first/last items to center */}
+            <div className="min-h-[30px] w-full" />
           </div>
-          {/* Overlay for wheel effect */}
-          <div className="absolute inset-0 pointer-events-none bg-gradient-to-b from-card via-transparent to-card opacity-80" />
+          {/* Overlay for wheel effect - Darker at edges for depth */}
+          <div className="absolute top-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-b from-card to-transparent z-20" />
+          <div className="absolute bottom-0 left-0 right-0 h-1/3 pointer-events-none bg-gradient-to-t from-card to-transparent z-20" />
         </div>
       </div>
 
