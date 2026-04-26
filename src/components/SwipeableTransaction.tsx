@@ -162,9 +162,9 @@ export default function SwipeableTransaction({
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-[#000] border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors"
+        className="relative bg-card border border-white/5 p-4 flex items-center gap-4 active:cursor-grabbing hover:bg-white/[0.02] transition-colors rounded-2xl z-10"
       >
-        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner`}>
+        <div className={`w-12 h-12 rounded-2xl ${bgColor} flex items-center justify-center shrink-0 shadow-inner border border-white/5`}>
             <span className={`text-lg font-black ${accentColor}`}>
                 {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 0 }).replace('-', '')}
             </span>
@@ -177,24 +177,29 @@ export default function SwipeableTransaction({
                     {transaction.clean_name || transaction.label}
                 </h4>
                 {(transaction.link_id || transaction.linked_id) && <Link2 size={12} className="text-accent-purple shrink-0" />}
+                
                 <button 
+                  onPointerDown={(e) => e.stopPropagation()}
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setShowDetails(true);
                   }}
-                  className="p-1 hover:bg-white/10 rounded-md transition-colors text-[#8e8e93] hover:text-white"
+                  className="w-7 h-7 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 text-[#8e8e93] hover:text-white transition-all shrink-0 ml-1"
                 >
                   <Info size={14} />
                 </button>
             </div>
-            <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-black text-[#444] uppercase tracking-[0.2em]">
+            <div className="flex items-center gap-2 mt-1.5">
+                <span className="text-[9px] font-black text-[#444] uppercase tracking-[0.2em]">
                     {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
                 </span>
                 <span className="w-1 h-1 rounded-full bg-white/10" />
-                <span className="text-[10px] font-bold text-accent-purple/60 uppercase">
-                    {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
-                </span>
+                <div className="px-2.5 py-0.5 rounded-full bg-accent-purple/10 border border-accent-purple/20">
+                  <span className="text-[9px] font-black text-accent-purple uppercase tracking-wider">
+                      {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
+                  </span>
+                </div>
             </div>
         </div>
 
