@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { getTransactionsAction, updateTransactionCategoryAction } from '@/app/actions/bank';
 import { getCategoriesAction } from '@/app/actions/categories';
 import { Search, Calendar, Filter, ArrowUp, ArrowDown, Tag, ChevronDown, CreditCard, ArrowRightLeft, RefreshCw, Info, FileText, CircleDollarSign, ArrowUpRight } from 'lucide-react';
+import SwipeableTransaction from '@/components/SwipeableTransaction';
 
 export default function TransactionsPage() {
   const [transactions, setTransactions] = useState<any[]>([]);
@@ -197,77 +198,16 @@ export default function TransactionsPage() {
                       </span>
                   </div>
 
-                  <div className="space-y-2">
-                      {advanceTransactions.map((tx) => {
-                          const txDate = new Date(tx.date_real);
-                          const isSpending = tx.amount < 0;
-                          return (
-                              <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all group">
-                                  <div className="w-12 h-12 rounded-2xl bg-card border border-accent-yellow/20 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-yellow transition-colors shadow-sm relative overflow-hidden">
-                                      <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />
-                                      <span className="text-[8px] text-accent-yellow font-black uppercase tracking-widest relative z-10">
-                                          {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
-                                      </span>
-                                      <span className="text-base text-white font-bold leading-none relative z-10">
-                                          {txDate.getDate()}
-                                      </span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                          {tx.transaction_type && (
-                                            <div className="shrink-0">
-                                              {tx.transaction_type.toUpperCase().startsWith('CB') ? (
-                                                <CreditCard size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
-                                                <ArrowUpRight size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
-                                                <RefreshCw size={14} className="text-accent-yellow opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
-                                                <CircleDollarSign size={14} className="text-accent-yellow opacity-60" />
-                                              ) : null}
-                                            </div>
-                                          )}
-                                          <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-yellow transition-colors">
-                                              {tx.clean_name || tx.label}
-                                          </h4>
-                                      </div>
-                                      <div className="flex items-center gap-3 mt-1.5">
-                                          <div className="relative group/cat">
-                                            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
-                                              <Tag size={10} className="text-accent-yellow opacity-70" />
-                                              <select 
-                                                value={tx.category_id || ''}
-                                                onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
-                                                className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.1em] outline-none cursor-pointer hover:text-white transition-colors pr-4 min-w-[80px]"
-                                                disabled={updatingId === tx.id}
-                                              >
-                                                <option value="" className="bg-[#1c1c1e]">Général</option>
-                                                {categories
-                                                  .filter(cat => {
-                                                    const isExpense = tx.amount < 0;
-                                                    return isExpense ? cat.families?.type === 'expense' : cat.families?.type === 'income';
-                                                  })
-                                                  .map(cat => (
-                                                    <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                                  ))
-                                                }
-                                              </select>
-                                              <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
-                                            </div>
-                                          </div>
-                                          <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
-                                              PRÉVU
-                                          </span>
-                                      </div>
-                                  </div>
-                                  <div className="text-right shrink-0 min-w-[120px]">
-                                      <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
-                                          {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
-                                      </p>
-                                  </div>
-                              </div>
-                          );
-                      })}
+                  <div className="space-y-2 px-1">
+                      {advanceTransactions.map((tx) => (
+                        <SwipeableTransaction 
+                          key={tx.id}
+                          transaction={tx}
+                          categories={categories}
+                          onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                          updatingId={updatingId}
+                        />
+                      ))}
                   </div>
               </div>
           )}
@@ -282,78 +222,16 @@ export default function TransactionsPage() {
                       </span>
                   </div>
  
-                  <div className="space-y-2">
-                      {groupedTx[activeTab].txs.map((tx: any) => {
-                          const txDate = new Date(tx.date_real);
-                          const isSpending = tx.amount < 0;
-                          return (
-                              <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
-                                  <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
-                                      <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
-                                          {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
-                                      </span>
-                                      <span className="text-base text-white font-bold leading-none">
-                                          {txDate.getDate()}
-                                      </span>
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-2">
-                                          {tx.transaction_type && (
-                                            <div className="shrink-0">
-                                              {tx.transaction_type.toUpperCase().startsWith('CB') ? (
-                                                <CreditCard size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
-                                                <ArrowUpRight size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
-                                                <RefreshCw size={14} className="text-accent-purple opacity-60" />
-                                              ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
-                                                <CircleDollarSign size={14} className="text-accent-purple opacity-60" />
-                                              ) : null}
-                                            </div>
-                                          )}
-                                          <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
-                                              {tx.clean_name || tx.label}
-                                          </h4>
-                                      </div>
-                                      <div className="flex items-center gap-3 mt-1.5">
-                                          <div className="relative group/cat">
-                                            <div className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/5 px-2 py-1 rounded-lg transition-all cursor-pointer">
-                                              <Tag size={10} className="text-accent-purple opacity-70" />
-                                              <select 
-                                                value={tx.category_id || ''}
-                                                onChange={(e) => handleUpdateCategory(tx.id, e.target.value || null)}
-                                                className="appearance-none bg-transparent text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.1em] outline-none cursor-pointer hover:text-white transition-colors pr-4 min-w-[80px]"
-                                                disabled={updatingId === tx.id}
-                                              >
-                                                <option value="" className="bg-[#1c1c1e]">Général</option>
-                                                {categories
-                                                  .filter(cat => {
-                                                    const isExpense = tx.amount < 0;
-                                                    return isExpense ? cat.families?.type === 'expense' : cat.families?.type === 'income';
-                                                  })
-                                                  .map(cat => (
-                                                    <option key={cat.id} value={cat.id} className="bg-[#1c1c1e]">{cat.name}</option>
-                                                  ))
-                                                }
-                                              </select>
-                                              <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 text-[#444] pointer-events-none" />
-                                            </div>
-                                          </div>
-                                          {tx.is_advance && (
-                                              <span className="text-accent-yellow text-[9px] font-black uppercase bg-accent-yellow/10 px-1.5 py-0.5 rounded">
-                                                  Prévu
-                                              </span>
-                                          )}
-                                      </div>
-                                  </div>
-                                  <div className="text-right shrink-0 min-w-[120px]">
-                                      <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
-                                          {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
-                                      </p>
-                                  </div>
-                              </div>
-                          );
-                      })}
+                  <div className="space-y-2 px-1">
+                      {groupedTx[activeTab].txs.map((tx: any) => (
+                        <SwipeableTransaction 
+                          key={tx.id}
+                          transaction={tx}
+                          categories={categories}
+                          onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                          updatingId={updatingId}
+                        />
+                      ))}
                   </div>
               </div>
           )}
@@ -366,53 +244,16 @@ export default function TransactionsPage() {
           )}
 
           {searchQuery && filteredRegularTransactions.length > 0 && (
-            <div className="space-y-4 animate-fade-in-up">
-              {filteredRegularTransactions.map((tx) => {
-                const txDate = new Date(tx.date_real);
-                const isSpending = tx.amount < 0;
-                return (
-                  <div key={tx.id} className="flex items-center gap-3 p-4 rounded-2xl hover:bg-white/[0.03] transition-all group border border-transparent hover:border-white/5">
-                    <div className="w-12 h-12 rounded-2xl bg-card border border-white/5 flex flex-col items-center justify-center shrink-0 group-hover:border-accent-purple/30 transition-colors shadow-sm">
-                        <span className="text-[8px] text-[#8e8e93] font-black uppercase tracking-widest">
-                            {txDate.toLocaleDateString('fr-FR', { weekday: 'short' }).replace('.', '').substring(0, 3)}
-                        </span>
-                        <span className="text-base text-white font-bold leading-none">
-                            {txDate.getDate()}
-                        </span>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2">
-                            {tx.transaction_type && (
-                              <div className="shrink-0">
-                                {tx.transaction_type.toUpperCase().startsWith('CB') ? (
-                                  <CreditCard size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type.toUpperCase() === 'VIREMENT' ? (
-                                  <ArrowUpRight size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type.toUpperCase() === 'PRÉLÈVEMENT' ? (
-                                  <RefreshCw size={14} className="text-accent-purple opacity-60" />
-                                ) : tx.transaction_type.toUpperCase() === 'FRAIS' ? (
-                                  <CircleDollarSign size={14} className="text-accent-purple opacity-60" />
-                                ) : null}
-                              </div>
-                            )}
-                            <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
-                                {tx.clean_name || tx.label}
-                            </h4>
-                        </div>
-                        <div className="flex items-center gap-3 mt-1">
-                            <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-[0.15em]">
-                                {tx.category?.name || 'Général'}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="text-right shrink-0 min-w-[120px]">
-                        <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
-                            {isSpending ? '' : '+'}{Math.abs(tx.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
-                        </p>
-                    </div>
-                  </div>
-                );
-              })}
+            <div className="space-y-4 animate-fade-in-up px-1">
+              {filteredRegularTransactions.map((tx) => (
+                <SwipeableTransaction 
+                  key={tx.id}
+                  transaction={tx}
+                  categories={categories}
+                  onSelectCategory={(catId) => handleUpdateCategory(tx.id, catId)}
+                  updatingId={updatingId}
+                />
+              ))}
             </div>
           )}
         </div>
