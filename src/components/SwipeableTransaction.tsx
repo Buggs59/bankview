@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
-import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, Check, ChevronRight } from 'lucide-react';
+import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, Check, ChevronRight, Info, X } from 'lucide-react';
 
 interface Category {
   id: string;
@@ -37,6 +37,7 @@ export default function SwipeableTransaction({
   onSelectCategory,
   updatingId 
 }: SwipeableTransactionProps) {
+  const [showDetails, setShowDetails] = useState(false);
   const [isSwiped, setIsSwiped] = useState(false);
   const controls = useAnimationControls();
   const txDate = new Date(transaction.date_real);
@@ -110,9 +111,9 @@ export default function SwipeableTransaction({
   const accentHover = transaction.is_advance ? 'group-hover:border-accent-yellow' : 'group-hover:border-accent-purple/30';
 
   return (
-    <div className="relative overflow-hidden rounded-2xl mb-2 group h-[88px]">
+    <div className="relative overflow-visible rounded-2xl mb-2 group h-[88px]">
       {/* Background Vertical Wheel Picker */}
-      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-l from-accent-purple/10 to-transparent flex items-center justify-end overflow-hidden rounded-2xl">
         <div className="w-[160px] h-full relative">
           <div 
             ref={scrollRef}
@@ -151,7 +152,7 @@ export default function SwipeableTransaction({
         dragElastic={0.1}
         onDragEnd={handleDragEnd}
         animate={controls}
-        className="relative bg-card border border-white/5 h-full px-4 flex items-center gap-3 z-10 touch-pan-y active:cursor-grabbing shadow-lg"
+        className="relative bg-card border border-white/5 h-full px-4 flex items-center gap-3 z-10 touch-pan-y active:cursor-grabbing shadow-lg rounded-2xl"
       >
         <div className={`w-12 h-12 rounded-2xl bg-card border ${accentBorder} flex flex-col items-center justify-center shrink-0 ${accentHover} transition-colors shadow-sm relative overflow-hidden`}>
             {transaction.is_advance && <div className="absolute inset-0 bg-accent-yellow/5 animate-pulse" />}
@@ -169,10 +170,19 @@ export default function SwipeableTransaction({
                 <h4 className="text-white text-[15px] font-semibold truncate group-hover:text-accent-purple transition-colors">
                     {transaction.clean_name || transaction.label}
                 </h4>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowDetails(true);
+                  }}
+                  className="p-1 text-[#444] hover:text-accent-purple transition-colors shrink-0"
+                >
+                  <Info size={14} />
+                </button>
             </div>
             <div className="flex items-center gap-3 mt-1">
                 <span className={`text-[10px] font-black uppercase tracking-[0.1em] ${transaction.category_id ? 'text-accent-purple' : 'text-[#444]'}`}>
-                    {allOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
+                    {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
                 </span>
             </div>
         </div>
@@ -192,6 +202,89 @@ export default function SwipeableTransaction({
             )}
         </div>
       </motion.div>
+
+      {/* Details Modal */}
+      <AnimatePresence>
+        {showDetails && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4"
+            onClick={() => setShowDetails(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-card border border-white/10 w-full max-w-md rounded-3xl overflow-hidden shadow-2xl"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-3 rounded-2xl bg-white/5 border ${accentBorder}`}>
+                      {getIcon(transaction.transaction_type, accentColor)}
+                    </div>
+                    <div>
+                      <h3 className="text-white font-bold text-lg leading-tight">Détails de l'opération</h3>
+                      <p className="text-[#8e8e93] text-sm">{txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setShowDetails(false)}
+                    className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-[#8e8e93] transition-colors"
+                  >
+                    <X size={20} />
+                  </button>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
+                    <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Libellé Nettoyé</p>
+                    <p className="text-white font-semibold">{transaction.clean_name || 'Non défini'}</p>
+                  </div>
+
+                  <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
+                    <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Dénomination Bancaire (Brut)</p>
+                    <p className="text-white/60 font-mono text-xs break-all leading-relaxed italic">{transaction.label}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
+                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Type</p>
+                      <p className="text-white font-semibold">{transaction.transaction_type || 'Inconnu'}</p>
+                    </div>
+                    <div className="bg-white/5 border border-white/5 p-4 rounded-2xl">
+                      <p className="text-[#8e8e93] text-[10px] font-black uppercase tracking-widest mb-1">Montant</p>
+                      <p className={`text-lg font-bold ${!isSpending ? 'text-accent-green' : 'text-white'}`}>
+                        {transaction.amount.toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="bg-accent-purple/10 border border-accent-purple/20 p-4 rounded-2xl flex items-center justify-between">
+                    <div>
+                      <p className="text-accent-purple text-[10px] font-black uppercase tracking-widest mb-1">Catégorie</p>
+                      <p className="text-white font-bold">
+                        {baseOptions.find(c => c.id === transaction.category_id)?.name || 'GÉNÉRAL'}
+                      </p>
+                    </div>
+                    <Tag className="text-accent-purple" size={24} />
+                  </div>
+                </div>
+
+                <button 
+                  onClick={() => setShowDetails(false)}
+                  className="w-full mt-8 py-4 bg-white text-black font-bold rounded-2xl hover:bg-[#e5e5e5] transition-colors"
+                >
+                  Fermer
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
