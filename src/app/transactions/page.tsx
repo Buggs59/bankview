@@ -115,38 +115,6 @@ export default function TransactionsPage() {
     }
   }, [monthKeys, activeTab, advanceTransactions]);
 
-  const stats = useMemo(() => {
-    const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    
-    const weekTx = transactions.filter(tx => 
-      new Date(tx.date_real) >= oneWeekAgo && 
-      tx.amount < 0 && 
-      !tx.link_id && !tx.linked_id // Exclude linked transactions from stats
-    );
-    const weekTotal = weekTx.reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
-    
-    const days = [0,0,0,0,0,0,0];
-    const dayMap: Record<number, number> = { 6: 0, 0: 1, 1: 2, 2: 3, 3: 4, 4: 5, 5: 6 };
-    
-    weekTx.forEach(tx => {
-      const day = new Date(tx.date_real).getDay();
-      const idx = dayMap[day];
-      if (idx !== undefined) days[idx] += Math.abs(tx.amount);
-    });
-
-    const maxDay = Math.max(...days, 1);
-    const dayHeights = days.map(d => (d / maxDay) * 100);
-
-    const catTotals: Record<string, number> = {};
-    weekTx.forEach(tx => {
-      const cat = tx.category?.name || 'Général';
-      catTotals[cat] = (catTotals[cat] || 0) + Math.abs(tx.amount);
-    });
-    const biggestCat = Object.entries(catTotals).sort((a,b) => b[1] - a[1])[0]?.[0] || 'N/A';
-
-    return { weekTotal, dayHeights, biggestCat, average: weekTotal / 7 };
-  }, [transactions]);
 
   const sortedCategories = useMemo(() => 
     [...categories].sort((a, b) => a.name.localeCompare(b.name)),
@@ -162,11 +130,8 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="pb-32 pt-4">
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-8 items-start w-full">
-        
-        {/* Main Content: Transactions List */}
-        <div className="order-2 xl:order-1 space-y-12 w-full min-w-0">
+    <div className="pb-32 pt-4 max-w-4xl mx-auto">
+      <div className="space-y-12 w-full min-w-0">
           {/* Search Header inside main column */}
           <div className="flex items-center gap-4 animate-fade-in-up w-full mb-8 z-[50] relative">
             <div className="relative flex-1">
@@ -368,56 +333,6 @@ export default function TransactionsPage() {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Spending Summary Chart */}
-        <div className="order-1 xl:order-2 w-full xl:sticky xl:top-12 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-[#1c1c1e] rounded-[32px] p-8 border border-white/[0.06] space-y-10 shadow-2xl relative overflow-hidden">
-              <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-purple/5 blur-[80px] rounded-full" />
-              
-              <div className="flex justify-between items-end relative z-10">
-                  <div>
-                      <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Dépenses 7j</span>
-                      <div className="flex items-baseline gap-3 mt-2">
-                          <span className="text-5xl font-black text-white tracking-tighter">€{stats.weekTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          <span className="text-accent-purple text-[10px] font-black bg-accent-purple/10 px-3 py-1 rounded-full uppercase tracking-widest">
-                              7 Jours
-                          </span>
-                      </div>
-                  </div>
-                  <div className="text-right">
-                      <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Moyenne</span>
-                      <p className="text-2xl font-bold text-white mt-1">€{stats.average.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                  </div>
-              </div>
- 
-              <div className="h-56 flex items-end justify-between gap-3 px-1 relative z-10">
-                  {stats.dayHeights.map((h, i) => (
-                      <div key={i} className="flex-1 flex flex-col items-center gap-5 h-full justify-end group">
-                          <div 
-                              className={`w-full rounded-2xl transition-all duration-700 ease-premium ${h === Math.max(...stats.dayHeights) ? 'bg-accent-purple shadow-[0_0_30px_rgba(140,141,250,0.5)]' : 'bg-white/5 group-hover:bg-white/10'}`} 
-                              style={{ height: `${Math.max(h, 6)}%` }} 
-                          />
-                          <span className="text-[#8e8e93] text-[10px] font-black uppercase tracking-tighter opacity-40">
-                              {['S','D','L','M','M','J','V'][i]}
-                          </span>
-                      </div>
-                  ))}
-              </div>
-           </div>
- 
-           {/* Info Cards */}
-           <div className="grid grid-cols-2 gap-4">
-              <div className="p-6 rounded-[32px] bg-[#1c1c1e] border border-white/[0.06] hover:bg-[#242426] transition-all">
-                  <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Top Poste</span>
-                  <p className="text-base font-bold text-white truncate">{stats.biggestCat}</p>
-              </div>
-              <div className="p-6 rounded-[32px] bg-[#1c1c1e] border border-white/[0.06] hover:bg-[#242426] transition-all">
-                  <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Activité</span>
-                  <p className="text-base font-bold text-white">Constant</p>
-              </div>
-           </div>
-        </div>
       </div>
     </div>
   );
