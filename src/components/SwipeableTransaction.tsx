@@ -166,6 +166,11 @@ export default function SwipeableTransaction({
   const [potentialMatches, setPotentialMatches] = useState<any[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const controls = useAnimationControls();
   const txDate = new Date(transaction.date_real);
@@ -293,10 +298,14 @@ export default function SwipeableTransaction({
               </span>
               {isLinked && <Link2 size={11} className="text-accent-purple/50 shrink-0" />}
               <button
-                onClick={e => { e.stopPropagation(); setShowDetails(true); }}
-                className="p-1 rounded-lg hover:bg-white/10 text-[#444] hover:text-[#8e8e93] transition-colors shrink-0"
+                onClick={e => { 
+                  e.preventDefault();
+                  e.stopPropagation(); 
+                  setShowDetails(true); 
+                }}
+                className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-[#8e8e93] hover:text-white transition-all shrink-0 ml-auto"
               >
-                <Info size={13} />
+                <Info size={15} />
               </button>
             </div>
             <div className="flex items-center gap-2 mt-1 opacity-60">
@@ -317,7 +326,7 @@ export default function SwipeableTransaction({
 
       {/* Detail Modal */}
       <AnimatePresence>
-        {showDetails && createPortal(
+        {(showDetails && mounted) && createPortal(
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
