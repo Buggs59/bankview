@@ -153,7 +153,7 @@ export default function TransactionsPage() {
 
   return (
     <div className="pb-32 pt-4">
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-16 items-start w-full">
+      <div className="grid grid-cols-1 xl:grid-cols-[1fr_420px] gap-8 items-start w-full">
         
         {/* Main Content: Transactions List */}
         <div className="order-2 xl:order-1 space-y-12 w-full min-w-0">

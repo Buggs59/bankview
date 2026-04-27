@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
-import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, ChevronRight, Info, X, Link2, Unlink, Link } from 'lucide-react';
+import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, ChevronRight, Info, X, Link2, Unlink, Link, Check } from 'lucide-react';
 import { getMatchableTransactionsAction, linkTransactionsAction, unlinkTransactionAction } from '@/app/actions/bank';
 
 interface Category {
@@ -37,11 +37,10 @@ interface SwipeableTransactionProps {
   updatingId?: string | null;
 }
 
-// ─── Drum/Cylinder Picker ────────────────────────────────────────────────────
-const ITEM_HEIGHT = 52;
-const VISIBLE_ITEMS = 5;
+// ─── Inline Drum Picker (Optimized for row height) ──────────────────────────
+const INLINE_ITEM_HEIGHT = 32;
 
-function DrumPicker({
+function InlineDrumPicker({
   items,
   selectedId,
   onSelect,
@@ -51,27 +50,33 @@ function DrumPicker({
   onSelect: (id: string | null) => void;
 }) {
   const selectedIndex = Math.max(0, items.findIndex(i => i.id === (selectedId ?? null)));
-  const [offset, setOffset] = useState(-selectedIndex * ITEM_HEIGHT);
+  const [offset, setOffset] = useState(-selectedIndex * INLINE_ITEM_HEIGHT);
   const startYRef = useRef<number | null>(null);
   const startOffsetRef = useRef<number>(0);
-  const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
 
   const clampOffset = useCallback((raw: number) => {
-    const min = -(items.length - 1) * ITEM_HEIGHT;
+    const min = -(items.length - 1) * INLINE_ITEM_HEIGHT;
     const max = 0;
     return Math.max(min, Math.min(max, raw));
   }, [items.length]);
 
   const snapToNearest = useCallback((raw: number) => {
     const clamped = clampOffset(raw);
-    const idx = Math.round(-clamped / ITEM_HEIGHT);
-    const snapped = -idx * ITEM_HEIGHT;
+    const idx = Math.round(-clamped / INLINE_ITEM_HEIGHT);
+    const snapped = -idx * INLINE_ITEM_HEIGHT;
     setOffset(snapped);
-    onSelect(items[idx]?.id ?? null);
-  }, [clampOffset, items, onSelect]);
+    if (items[idx]?.id !== selectedId) {
+      onSelect(items[idx]?.id ?? null);
+    }
+  }, [clampOffset, items, onSelect, selectedId]);
 
-  // Touch events
+  // Handle external selection changes
+  useEffect(() => {
+    const idx = Math.max(0, items.findIndex(i => i.id === (selectedId ?? null)));
+    setOffset(-idx * INLINE_ITEM_HEIGHT);
+  }, [selectedId, items]);
+
   const onTouchStart = (e: React.TouchEvent) => {
     startYRef.current = e.touches[0].clientY;
     startOffsetRef.current = offset;
@@ -87,170 +92,65 @@ function DrumPicker({
     snapToNearest(offset);
   };
 
-  // Mouse events
-  const onMouseDown = (e: React.MouseEvent) => {
-    startYRef.current = e.clientY;
-    startOffsetRef.current = offset;
-    isDraggingRef.current = true;
-  };
-  useEffect(() => {
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDraggingRef.current || startYRef.current === null) return;
-      const delta = e.clientY - startYRef.current;
-      setOffset(clampOffset(startOffsetRef.current + delta));
-    };
-    const onMouseUp = () => {
-      if (isDraggingRef.current) {
-        isDraggingRef.current = false;
-        snapToNearest(offset);
-      }
-    };
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mouseup', onMouseUp);
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mouseup', onMouseUp);
-    };
-  }, [offset, snapToNearest, clampOffset]);
-
-  const center = Math.floor(VISIBLE_ITEMS / 2); // 2
-
   return (
-    <div
-      className="relative select-none overflow-hidden"
-      style={{ height: ITEM_HEIGHT * VISIBLE_ITEMS }}
-      ref={containerRef}
+    <div 
+      className="relative h-full w-[180px] bg-[#1a1b1e] overflow-hidden select-none touch-none cursor-ns-resize border-l border-white/5"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
-      onMouseDown={onMouseDown}
+      onMouseDown={(e) => {
+        startYRef.current = e.clientY;
+        startOffsetRef.current = offset;
+        isDraggingRef.current = true;
+        const move = (me: MouseEvent) => {
+          if (!isDraggingRef.current || startYRef.current === null) return;
+          const delta = me.clientY - startYRef.current;
+          setOffset(clampOffset(startOffsetRef.current + delta));
+        };
+        const up = () => {
+          isDraggingRef.current = false;
+          snapToNearest(offset);
+          window.removeEventListener('mousemove', move);
+          window.removeEventListener('mouseup', up);
+        };
+        window.addEventListener('mousemove', move);
+        window.addEventListener('mouseup', up);
+      }}
     >
-      {/* Gradient masks */}
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-20 z-10"
-        style={{ background: 'linear-gradient(to bottom, #111214 0%, transparent 100%)' }} />
-      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 z-10"
-        style={{ background: 'linear-gradient(to top, #111214 0%, transparent 100%)' }} />
-
-      {/* Selection highlight */}
-      <div
-        className="pointer-events-none absolute inset-x-0 z-10 rounded-2xl border border-accent-purple/40 bg-accent-purple/10"
-        style={{
-          top: center * ITEM_HEIGHT,
-          height: ITEM_HEIGHT,
-        }}
-      />
-
-      {/* Drum items */}
-      <div
-        className="absolute inset-x-0 cursor-grab active:cursor-grabbing"
-        style={{
-          transform: `translateY(${offset + center * ITEM_HEIGHT}px)`,
-          transition: isDraggingRef.current ? 'none' : 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
-        }}
+      {/* Center Highlight */}
+      <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-[32px] bg-accent-purple/10 pointer-events-none" />
+      
+      <motion.div
+        animate={{ y: offset + (76 / 2) - (INLINE_ITEM_HEIGHT / 2) }} // 76 is row height approx
+        transition={{ type: 'spring', stiffness: 400, damping: 40 }}
+        className="absolute w-full"
       >
         {items.map((item, idx) => {
-          const distance = Math.abs(idx - Math.round(-offset / ITEM_HEIGHT));
-          const opacity = distance === 0 ? 1 : distance === 1 ? 0.55 : 0.22;
-          const scale = distance === 0 ? 1 : distance === 1 ? 0.92 : 0.84;
+          const distance = Math.abs(offset / INLINE_ITEM_HEIGHT + idx);
+          const opacity = Math.max(0.15, 1 - distance * 0.5);
+          const scale = Math.max(0.8, 1 - distance * 0.1);
+          const isSelected = item.id === (selectedId ?? null);
+
           return (
             <div
               key={item.id ?? 'null'}
-              style={{
-                height: ITEM_HEIGHT,
-                opacity,
-                transform: `scale(${scale})`,
-                transition: 'opacity 0.15s, transform 0.15s',
-              }}
-              className="flex items-center justify-center px-6"
-              onClick={() => {
-                const snapped = -idx * ITEM_HEIGHT;
-                setOffset(snapped);
-                onSelect(item.id);
-              }}
+              className="w-full flex items-center justify-center px-4 transition-colors duration-300"
+              style={{ height: INLINE_ITEM_HEIGHT }}
             >
-              <span className={`font-bold text-[15px] truncate max-w-full text-center ${distance === 0 ? 'text-white' : 'text-[#8e8e93]'}`}>
+              <span className={`text-[10px] font-black uppercase tracking-widest truncate
+                ${isSelected ? 'text-accent-purple' : 'text-[#555]'}
+              `} style={{ opacity, transform: `scale(${scale})` }}>
                 {item.label}
               </span>
             </div>
           );
         })}
-      </div>
-    </div>
-  );
-}
-
-// ─── Category Picker Modal ────────────────────────────────────────────────────
-function CategoryPickerModal({
-  categories,
-  currentCategoryId,
-  onSelect,
-  onClose,
-}: {
-  categories: Category[];
-  currentCategoryId: string | null | undefined;
-  onSelect: (id: string | null) => void;
-  onClose: () => void;
-}) {
-  const [selected, setSelected] = useState<string | null>(currentCategoryId ?? null);
-  
-  const items = [
-    { id: null, label: '— Général —' },
-    ...categories.map(c => ({ id: c.id, label: c.name })),
-  ];
-
-  return createPortal(
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[999] flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm"
-      onClick={onClose}
-    >
-      <motion.div
-        initial={{ y: 60, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        exit={{ y: 60, opacity: 0 }}
-        transition={{ type: 'spring', damping: 26, stiffness: 320 }}
-        className="w-full max-w-sm bg-[#111214] rounded-t-[40px] sm:rounded-[40px] border border-white/10 overflow-hidden shadow-2xl"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-4 pb-2">
-          <div className="w-10 h-1 bg-white/20 rounded-full" />
-        </div>
-
-        <div className="px-6 pb-2">
-          <h3 className="text-lg font-black text-white text-center">Catégorie</h3>
-          <p className="text-[11px] text-[#555] uppercase tracking-widest font-bold text-center mt-1">
-            Faites défiler pour choisir
-          </p>
-        </div>
-
-        {/* Drum Picker */}
-        <DrumPicker
-          items={items}
-          selectedId={selected}
-          onSelect={setSelected}
-        />
-
-        {/* Actions */}
-        <div className="flex gap-3 p-6 pt-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-4 rounded-2xl bg-white/5 text-[#8e8e93] font-bold text-sm hover:bg-white/10 transition-all"
-          >
-            Annuler
-          </button>
-          <button
-            onClick={() => { onSelect(selected); onClose(); }}
-            className="flex-2 flex-1 py-4 rounded-2xl bg-accent-purple text-white font-black text-sm hover:bg-accent-purple/90 transition-all shadow-[0_0_20px_rgba(140,141,250,0.4)]"
-          >
-            Confirmer
-          </button>
-        </div>
       </motion.div>
-    </motion.div>,
-    document.body
+
+      {/* Fade Overlays */}
+      <div className="absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-[#18181b] to-transparent pointer-events-none" />
+      <div className="absolute inset-x-0 bottom-0 h-6 bg-gradient-to-t from-[#18181b] to-transparent pointer-events-none" />
+    </div>
   );
 }
 
@@ -263,8 +163,6 @@ export default function SwipeableTransaction({
   updatingId,
 }: SwipeableTransactionProps) {
   const [showDetails, setShowDetails] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [isSwiped, setIsSwiped] = useState(false);
   const [potentialMatches, setPotentialMatches] = useState<any[]>([]);
   const [loadingMatches, setLoadingMatches] = useState(false);
   const [isLinking, setIsLinking] = useState(false);
@@ -280,25 +178,15 @@ export default function SwipeableTransaction({
     : 'from-accent-green/20 to-accent-green/5';
 
   const handleDragEnd = (_event: any, info: any) => {
-    if (info.offset.x < -80) {
-      setIsSwiped(true);
-      controls.start({ x: -180 });
+    if (info.offset.x < -60) {
+      controls.start({ x: -250 });
     } else {
-      setIsSwiped(false);
       controls.start({ x: 0 });
     }
   };
 
   const selectCategory = (id: string | null) => {
     onSelectCategory(id);
-    setIsSwiped(false);
-    controls.start({ x: 0 });
-  };
-
-  const handleOpenPicker = () => {
-    setIsSwiped(false);
-    controls.start({ x: 0 });
-    setShowPicker(true);
   };
 
   useEffect(() => {
@@ -356,24 +244,28 @@ export default function SwipeableTransaction({
   return (
     <>
       <div className="relative overflow-hidden rounded-[22px] group mb-2">
-        {/* Swipe Background — Drum Picker trigger */}
-        <div className="absolute inset-0 bg-[#18181b] flex items-center justify-end">
-          <button
-            onClick={handleOpenPicker}
-            className="h-full px-8 flex flex-col items-center justify-center gap-2 text-accent-purple hover:bg-accent-purple/10 transition-colors"
-          >
-            <Tag size={20} />
-            <span className="text-[9px] font-black uppercase tracking-widest text-accent-purple/60">
-              Classer
-            </span>
-          </button>
+        {/* Swipe Background — Inline Drum Picker */}
+        <div className="absolute inset-0 bg-[#18181b] flex items-center justify-end overflow-hidden">
+          <div className="flex-1 flex flex-col items-center justify-center pl-6 text-accent-purple/30 group-hover:text-accent-purple/50 transition-colors pointer-events-none">
+             <Tag size={16} />
+             <span className="text-[8px] font-black uppercase tracking-[0.3em] mt-1">Catégorie</span>
+          </div>
+          
+          <InlineDrumPicker
+            items={[
+              { id: null, label: 'Général' },
+              ...categories.map(c => ({ id: c.id, label: c.name }))
+            ]}
+            selectedId={transaction.category_id}
+            onSelect={selectCategory}
+          />
         </div>
 
         {/* Main Row */}
         <motion.div
           drag="x"
-          dragConstraints={{ left: -180, right: 0 }}
-          dragElastic={0.08}
+          dragConstraints={{ left: -250, right: 0 }}
+          dragElastic={0.05}
           onDragEnd={handleDragEnd}
           animate={controls}
           className={`relative flex items-center gap-4 px-4 py-3.5 active:cursor-grabbing cursor-grab
@@ -426,17 +318,6 @@ export default function SwipeableTransaction({
         </motion.div>
       </div>
 
-      {/* Category Picker Modal */}
-      <AnimatePresence>
-        {showPicker && (
-          <CategoryPickerModal
-            categories={categories}
-            currentCategoryId={transaction.category_id}
-            onSelect={selectCategory}
-            onClose={() => setShowPicker(false)}
-          />
-        )}
-      </AnimatePresence>
 
       {/* Detail Modal */}
       <AnimatePresence>
