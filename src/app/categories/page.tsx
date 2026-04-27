@@ -95,7 +95,7 @@ export default function CategoriesPage() {
                     const percentage = (cat.amount / totalAmount) * 100;
                     const Icon = cat.icon;
                     return (
-                        <div key={cat.name} className="bg-card/40 backdrop-blur-md p-10 rounded-[48px] border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden shadow-xl">
+                        <div key={cat.name} className="bg-[#1c1c1e] p-8 rounded-[32px] border border-white/[0.06] hover:border-white/10 transition-all group relative overflow-hidden shadow-xl">
                             <div className="absolute -right-12 -top-12 w-40 h-40 opacity-10 blur-3xl rounded-full" style={{ backgroundColor: cat.color }} />
                             
                             <div className="flex items-start justify-between relative z-10">
@@ -135,7 +135,7 @@ export default function CategoriesPage() {
 
         {/* Sidebar: Control Panel */}
         <div className="order-1 xl:order-2 w-full xl:sticky xl:top-12 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[48px] p-12 border border-white/5 space-y-12 shadow-2xl relative overflow-hidden">
+           <div className="bg-[#1c1c1e] rounded-[32px] p-10 border border-white/[0.06] space-y-10 shadow-2xl relative overflow-hidden">
               <div className="absolute -right-20 -top-20 w-80 h-80 bg-accent-purple/10 blur-[100px] rounded-full" />
               
               <div className="space-y-10 relative z-10 text-center">
@@ -174,7 +174,7 @@ export default function CategoriesPage() {
            </div>
 
            {/* Insights Card */}
-           <div className="bg-gradient-to-br from-white/[0.03] to-transparent p-10 rounded-[48px] border border-white/5 space-y-6 shadow-xl">
+           <div className="bg-gradient-to-br from-[#1c1c1e] to-[#161618] p-8 rounded-[32px] border border-white/[0.06] space-y-6 shadow-xl">
               <h4 className="text-accent-purple text-xs font-black uppercase tracking-[0.2em]">Analyse IA</h4>
               <p className="text-[#8e8e93] text-base leading-relaxed font-medium">
                 Ta plus grosse dépense ce mois-ci est <span className="text-white font-bold underline decoration-accent-purple/30 underline-offset-4">Logement</span>, représentant <span className="text-white font-bold">35%</span> de ton budget global.

@@ -94,7 +94,7 @@ export default function Home() {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 animate-fade-in-up" style={{ animationDelay: '200ms' }}>
         
         {/* Card 1: 7 Days Spending */}
-        <Link href="/transactions" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
+        <Link href="/transactions" className="bg-[#1c1c1e] rounded-[32px] p-8 space-y-8 hover:bg-[#242426] transition-all border border-white/[0.06] group shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-start">
             <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Analytique</span>
             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
@@ -120,7 +120,7 @@ export default function Home() {
         </Link>
 
         {/* Card 2: Upcoming / Bill */}
-        <div className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 border border-white/5 relative overflow-hidden group shadow-2xl">
+        <div className="bg-[#1c1c1e] rounded-[32px] p-8 space-y-8 border border-white/[0.06] relative overflow-hidden group shadow-2xl">
           <div className="flex justify-between items-start">
             <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Échéances</span>
             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
@@ -141,7 +141,7 @@ export default function Home() {
         </div>
 
         {/* Card 3: Recent Activity */}
-        <Link href="/transactions" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
+        <Link href="/transactions" className="bg-[#1c1c1e] rounded-[32px] p-8 space-y-8 hover:bg-[#242426] transition-all border border-white/[0.06] group shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-start">
             <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Flux Récents</span>
             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
@@ -164,7 +164,7 @@ export default function Home() {
         </Link>
 
         {/* Card 4: Top Categories */}
-        <Link href="/categories" className="bg-card/40 backdrop-blur-md rounded-[48px] p-10 space-y-8 hover:bg-card-hover transition-all border border-white/5 group shadow-2xl">
+        <Link href="/categories" className="bg-[#1c1c1e] rounded-[32px] p-8 space-y-8 hover:bg-[#242426] transition-all border border-white/[0.06] group shadow-2xl relative overflow-hidden">
           <div className="flex justify-between items-start">
             <span className="text-[#8e8e93] text-xs font-black uppercase tracking-[0.3em] opacity-60">Répartition</span>
             <div className="w-10 h-10 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">

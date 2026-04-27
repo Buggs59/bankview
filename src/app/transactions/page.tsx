@@ -166,7 +166,7 @@ export default function TransactionsPage() {
                     placeholder="Rechercher une transaction..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-card rounded-2xl py-5 pl-14 pr-8 text-base text-white border border-white/5 outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#444] font-medium"
+                    className="w-full bg-[#1c1c1e] rounded-2xl py-5 pl-14 pr-8 text-base text-white border border-white/[0.06] outline-none focus:border-accent-purple/30 transition-all placeholder:text-[#444] font-medium"
                 />
             </div>
             
@@ -176,7 +176,7 @@ export default function TransactionsPage() {
                     className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${
                         selectedCategoryId 
                         ? 'bg-accent-purple/10 border-accent-purple text-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.2)]' 
-                        : 'bg-card border-white/5 text-[#8e8e93] hover:text-white'
+                        : 'bg-[#1c1c1e] border-white/[0.06] text-[#8e8e93] hover:text-white'
                     }`}
                 >
                     {selectedCategoryId ? <Tag size={20} /> : <Filter size={20} />}
@@ -263,7 +263,7 @@ export default function TransactionsPage() {
                 className={`px-6 py-3 rounded-2xl border transition-all whitespace-nowrap font-bold text-sm ${
                   activeTab === 'upcoming' 
                   ? 'bg-accent-yellow/10 border-accent-yellow text-accent-yellow shadow-[0_0_15px_rgba(255,214,10,0.2)]' 
-                  : 'bg-card border-white/5 text-[#8e8e93] hover:text-white hover:border-white/10'
+                  : 'bg-[#1c1c1e] border-white/[0.06] text-[#8e8e93] hover:text-white hover:border-white/10'
                 }`}
               >
                 À VENIR
@@ -276,7 +276,7 @@ export default function TransactionsPage() {
                 className={`px-6 py-3 rounded-2xl border transition-all whitespace-nowrap font-bold text-sm uppercase tracking-tight ${
                   activeTab === key 
                   ? 'bg-accent-purple/10 border-accent-purple text-accent-purple shadow-[0_0_15px_rgba(140,141,250,0.2)]' 
-                  : 'bg-card border-white/5 text-[#8e8e93] hover:text-white hover:border-white/10'
+                  : 'bg-[#1c1c1e] border-white/[0.06] text-[#8e8e93] hover:text-white hover:border-white/10'
                 }`}
               >
                 {groupedTx[key].label}
@@ -362,7 +362,7 @@ export default function TransactionsPage() {
 
         {/* Spending Summary Chart */}
         <div className="order-1 xl:order-2 w-full xl:sticky xl:top-12 space-y-8 animate-fade-in-up" style={{ animationDelay: '100ms' }}>
-           <div className="bg-card rounded-[48px] p-10 border border-white/5 space-y-10 shadow-2xl relative overflow-hidden">
+           <div className="bg-[#1c1c1e] rounded-[32px] p-8 border border-white/[0.06] space-y-10 shadow-2xl relative overflow-hidden">
               <div className="absolute -right-20 -top-20 w-64 h-64 bg-accent-purple/5 blur-[80px] rounded-full" />
               
               <div className="flex justify-between items-end relative z-10">
@@ -398,11 +398,11 @@ export default function TransactionsPage() {
  
            {/* Info Cards */}
            <div className="grid grid-cols-2 gap-4">
-              <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all">
+              <div className="p-6 rounded-[32px] bg-[#1c1c1e] border border-white/[0.06] hover:bg-[#242426] transition-all">
                   <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Top Poste</span>
                   <p className="text-base font-bold text-white truncate">{stats.biggestCat}</p>
               </div>
-              <div className="p-6 rounded-[32px] bg-white/5 border border-white/5 hover:bg-white/[0.07] transition-all">
+              <div className="p-6 rounded-[32px] bg-[#1c1c1e] border border-white/[0.06] hover:bg-[#242426] transition-all">
                   <span className="text-[10px] font-black text-[#8e8e93] uppercase tracking-widest block mb-2 opacity-60">Activité</span>
                   <p className="text-base font-bold text-white">Constant</p>
               </div>

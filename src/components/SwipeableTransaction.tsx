@@ -243,7 +243,7 @@ export default function SwipeableTransaction({
 
   return (
     <>
-      <div className="relative overflow-hidden rounded-[22px] group mb-2">
+      <div className="relative overflow-hidden rounded-[32px] group mb-2">
         {/* Swipe Background — Inline Drum Picker */}
         <div className="absolute inset-0 bg-[#18181b] flex items-center justify-end overflow-hidden">
           <div className="flex-1 flex flex-col items-center justify-center pl-6 text-accent-purple/30 group-hover:text-accent-purple/50 transition-colors pointer-events-none">
@@ -268,16 +268,16 @@ export default function SwipeableTransaction({
           dragElastic={0.05}
           onDragEnd={handleDragEnd}
           animate={controls}
-          className={`relative flex items-center gap-4 px-4 py-3.5 active:cursor-grabbing cursor-grab
-            bg-[#17171a] border border-white/[0.06] 
-            hover:border-white/[0.1] hover:bg-[#1d1d20]
+          className={`relative flex items-center gap-4 px-5 py-4 active:cursor-grabbing cursor-grab
+            bg-[#1c1c1e] border border-white/[0.06] 
+            hover:border-white/[0.1] hover:bg-[#242426]
             transition-all duration-200
             ${isLinked ? 'opacity-50' : ''}
           `}
         >
           {/* Amount badge */}
-          <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${bgGradient} flex items-center justify-center shrink-0`}>
-            <span className={`text-[12px] font-black ${accentColor} leading-none`}>
+          <div className={`min-w-[72px] h-12 px-4 rounded-2xl bg-gradient-to-br ${bgGradient} flex items-center justify-center shrink-0`}>
+            <span className={`text-base font-black ${accentColor} leading-none whitespace-nowrap`}>
               {Math.abs(transaction.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
             </span>
           </div>
@@ -286,7 +286,7 @@ export default function SwipeableTransaction({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               {getIcon(transaction.transaction_type)}
-              <span className={`text-[14px] font-semibold truncate leading-tight
+              <span className={`text-[17px] font-bold truncate leading-tight tracking-tight
                 ${isLinked ? 'text-[#555]' : 'text-[#e5e5e7] group-hover:text-white transition-colors'}
               `}>
                 {transaction.clean_name || transaction.label}
@@ -299,18 +299,14 @@ export default function SwipeableTransaction({
                 <Info size={13} />
               </button>
             </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-[10px] font-bold text-[#3a3a3d] uppercase tracking-widest">
-                {txDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })}
+            <div className="flex items-center gap-2 mt-1 opacity-60">
+              <span className="text-[11px] font-black uppercase tracking-widest text-[#8e8e93]">
+                {new Date(transaction.date_real).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' }).toUpperCase()}
               </span>
-              {currentCatName && (
-                <>
-                  <span className="w-0.5 h-0.5 rounded-full bg-[#3a3a3d]" />
-                  <span className="text-[10px] font-bold text-accent-purple/50 uppercase tracking-wider">
-                    {currentCatName}
-                  </span>
-                </>
-              )}
+              <span className="text-[#444] text-[8px]">•</span>
+              <span className="text-[11px] font-black uppercase tracking-widest text-accent-purple/80">
+                {currentCatName || 'NON CLASSÉ'}
+              </span>
             </div>
           </div>
 
