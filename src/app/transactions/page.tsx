@@ -33,11 +33,21 @@ export default function TransactionsPage() {
   }
 
   const handleUpdateCategory = async (txId: string, catId: string | null) => {
-    setUpdatingId(txId);
-    await updateTransactionCategoryAction(txId, catId);
+    const originalTx = transactions.find(t => t.id === txId);
+    
+    // Optimistic Update
     setTransactions(prev => prev.map(tx => 
       tx.id === txId ? { ...tx, category_id: catId, category: categories.find(c => c.id === catId) } : tx
     ));
+
+    setUpdatingId(txId);
+    const res = await updateTransactionCategoryAction(txId, catId);
+    
+    if (res.error) {
+      // Rollback on error
+      setTransactions(prev => prev.map(tx => tx.id === txId ? originalTx : tx));
+      alert(`Erreur: ${res.error}`);
+    }
     setUpdatingId(null);
   };
 
