@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimationControls } from 'framer-motion';
 import { CreditCard, ArrowUpRight, RefreshCw, CircleDollarSign, Tag, ChevronRight, Info, X, Link2, Unlink, Link, Check } from 'lucide-react';
