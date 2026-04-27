@@ -94,7 +94,7 @@ function InlineDrumPicker({
 
   return (
     <div 
-      className="relative h-full w-[180px] bg-[#1a1b1e] overflow-hidden select-none touch-none cursor-ns-resize border-l border-white/5"
+      className="relative h-full w-[200px] bg-[#1a1b1e] overflow-hidden select-none touch-none cursor-ns-resize border-l border-white/5"
       onTouchStart={onTouchStart}
       onTouchMove={onTouchMove}
       onTouchEnd={onTouchEnd}
@@ -184,7 +184,7 @@ export default function SwipeableTransaction({
 
   const handleDragEnd = (_event: any, info: any) => {
     if (info.offset.x < -60) {
-      controls.start({ x: -250 });
+      controls.start({ x: -200 });
     } else {
       controls.start({ x: 0 });
     }
@@ -251,10 +251,7 @@ export default function SwipeableTransaction({
       <div className="relative overflow-hidden rounded-[32px] group mb-2">
         {/* Swipe Background — Inline Drum Picker */}
         <div className="absolute inset-0 bg-[#18181b] flex items-center justify-end overflow-hidden">
-          <div className="flex-1 flex flex-col items-center justify-center pl-6 text-accent-purple/30 group-hover:text-accent-purple/50 transition-colors pointer-events-none">
-             <Tag size={16} />
-             <span className="text-[8px] font-black uppercase tracking-[0.3em] mt-1">Catégorie</span>
-          </div>
+          {/* Picker directly aligned to the right */}
           
           <InlineDrumPicker
             items={[
@@ -269,7 +266,7 @@ export default function SwipeableTransaction({
         {/* Main Row */}
         <motion.div
           drag="x"
-          dragConstraints={{ left: -250, right: 0 }}
+          dragConstraints={{ left: -200, right: 0 }}
           dragElastic={0.05}
           onDragEnd={handleDragEnd}
           animate={controls}
