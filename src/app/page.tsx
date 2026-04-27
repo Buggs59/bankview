@@ -153,7 +153,9 @@ export default function Home() {
               <div key={tx.id} className="space-y-2">
                 <span className="text-white text-base font-bold block truncate group-hover:text-accent-purple transition-colors tracking-tight">{tx.label}</span>
                 <div className="flex items-center justify-between">
-                    <span className="text-[#8e8e93] text-xs font-medium opacity-60">€{Math.abs(tx.amount).toFixed(2)}</span>
+                    <span className="text-[#8e8e93] text-xs font-medium opacity-60">
+                      {tx.amount.toLocaleString('fr-FR', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 })}
+                    </span>
                     <span className="text-[10px] text-[#444] font-bold uppercase tracking-widest">Maintenant</span>
                 </div>
               </div>

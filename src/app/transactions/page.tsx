@@ -318,7 +318,7 @@ export default function TransactionsPage() {
                   <div className="flex justify-between items-end px-4 pb-5 border-b border-white/5">
                       <h2 className="text-3xl font-bold text-white tracking-tight">{groupedTx[activeTab].label}</h2>
                       <span className="text-sm font-black text-[#8e8e93] uppercase tracking-[0.2em]">
-                          TOTAL : {Math.abs(groupedTx[activeTab].total).toLocaleString('fr-FR', { minimumFractionDigits: 0 })}€
+                          TOTAL : {Math.abs(groupedTx[activeTab].total).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}€
                       </span>
                   </div>
  
@@ -369,7 +369,7 @@ export default function TransactionsPage() {
                   <div>
                       <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Dépenses 7j</span>
                       <div className="flex items-baseline gap-3 mt-2">
-                          <span className="text-5xl font-black text-white tracking-tighter">€{stats.weekTotal.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</span>
+                          <span className="text-5xl font-black text-white tracking-tighter">€{stats.weekTotal.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           <span className="text-accent-purple text-[10px] font-black bg-accent-purple/10 px-3 py-1 rounded-full uppercase tracking-widest">
                               7 Jours
                           </span>
@@ -377,7 +377,7 @@ export default function TransactionsPage() {
                   </div>
                   <div className="text-right">
                       <span className="text-[#8e8e93] text-[11px] font-black uppercase tracking-[0.2em]">Moyenne</span>
-                      <p className="text-2xl font-bold text-white mt-1">€{stats.average.toLocaleString('fr-FR', { maximumFractionDigits: 0 })}</p>
+                      <p className="text-2xl font-bold text-white mt-1">€{stats.average.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                   </div>
               </div>
  
