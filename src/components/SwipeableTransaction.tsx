@@ -54,6 +54,7 @@ function InlineDrumPicker({
   const startYRef = useRef<number | null>(null);
   const startOffsetRef = useRef<number>(0);
   const isDraggingRef = useRef(false);
+  const lastSelectedIdRef = useRef<string | null | undefined>(selectedId);
 
   const clampOffset = useCallback((raw: number) => {
     const min = -(items.length - 1) * INLINE_ITEM_HEIGHT;
@@ -64,18 +65,27 @@ function InlineDrumPicker({
   const snapToNearest = useCallback((raw: number) => {
     const clamped = clampOffset(raw);
     const idx = Math.round(-clamped / INLINE_ITEM_HEIGHT);
+    const item = items[idx];
     const snapped = -idx * INLINE_ITEM_HEIGHT;
+    
+    lastSelectedIdRef.current = item?.id;
     setOffset(snapped);
-    if (items[idx]?.id !== selectedId) {
-      onSelect(items[idx]?.id ?? null);
+    
+    if (item?.id !== selectedId) {
+      onSelect(item?.id ?? null);
     }
   }, [clampOffset, items, onSelect, selectedId]);
 
   // Handle external selection changes
   useEffect(() => {
     if (isDraggingRef.current) return;
+    
+    // If the external ID matches what we just manually selected, ignore
+    if (selectedId === lastSelectedIdRef.current) return;
+    
     const idx = Math.max(0, items.findIndex(i => i.id === (selectedId ?? null)));
     setOffset(-idx * INLINE_ITEM_HEIGHT);
+    lastSelectedIdRef.current = selectedId;
   }, [selectedId, items]);
 
   const onTouchStart = (e: React.TouchEvent) => {
