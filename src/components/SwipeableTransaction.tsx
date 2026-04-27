@@ -233,10 +233,10 @@ export default function SwipeableTransaction({
   const getIcon = (type?: string) => {
     if (!type) return null;
     const t = type.toUpperCase();
-    if (t.includes('CB') || t.includes('CARTE')) return <CreditCard size={13} className={accentColor} />;
-    if (t.includes('VIR')) return <ArrowUpRight size={13} className={accentColor} />;
-    if (t.includes('PRLV')) return <RefreshCw size={13} className={accentColor} />;
-    return <CircleDollarSign size={13} className={accentColor} />;
+    if (t.includes('CB') || t.includes('CARTE')) return <CreditCard size={16} className={accentColor} />;
+    if (t.includes('VIR')) return <ArrowUpRight size={16} className={accentColor} />;
+    if (t.includes('PRLV')) return <RefreshCw size={16} className={accentColor} />;
+    return <CircleDollarSign size={16} className={accentColor} />;
   };
 
   const currentCatName = categories.find(c => c.id === transaction.category_id)?.name;
@@ -277,8 +277,8 @@ export default function SwipeableTransaction({
         >
           {/* Amount badge */}
           <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${bgGradient} flex items-center justify-center shrink-0`}>
-            <span className={`text-[13px] font-black ${accentColor} leading-none`}>
-              {Math.abs(transaction.amount).toLocaleString('fr-FR', { maximumFractionDigits: 0 })}
+            <span className={`text-[12px] font-black ${accentColor} leading-none`}>
+              {Math.abs(transaction.amount).toLocaleString('fr-FR', { minimumFractionDigits: 2 })}€
             </span>
           </div>
 
