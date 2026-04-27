@@ -73,6 +73,7 @@ function InlineDrumPicker({
 
   // Handle external selection changes
   useEffect(() => {
+    if (isDraggingRef.current) return;
     const idx = Math.max(0, items.findIndex(i => i.id === (selectedId ?? null)));
     setOffset(-idx * INLINE_ITEM_HEIGHT);
   }, [selectedId, items]);
@@ -246,6 +247,11 @@ export default function SwipeableTransaction({
 
   const currentCatName = categories.find(c => c.id === transaction.category_id)?.name;
 
+  const pickerItems = useMemo(() => [
+    { id: null, label: 'Général' },
+    ...categories.map(c => ({ id: c.id, label: c.name }))
+  ], [categories]);
+
   return (
     <>
       <div className="relative overflow-hidden rounded-[32px] group mb-2">
@@ -254,10 +260,7 @@ export default function SwipeableTransaction({
           {/* Picker directly aligned to the right */}
           
           <InlineDrumPicker
-            items={[
-              { id: null, label: 'Général' },
-              ...categories.map(c => ({ id: c.id, label: c.name }))
-            ]}
+            items={pickerItems}
             selectedId={transaction.category_id}
             onSelect={selectCategory}
           />
