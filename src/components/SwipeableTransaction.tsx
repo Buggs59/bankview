@@ -299,7 +299,7 @@ export default function SwipeableTransaction({
 
           {/* Info */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               {getIcon(transaction.transaction_type)}
               <span className={`text-[17px] font-bold truncate leading-tight tracking-tight
                 ${isLinked ? 'text-[#555]' : 'text-[#e5e5e7] group-hover:text-white transition-colors'}

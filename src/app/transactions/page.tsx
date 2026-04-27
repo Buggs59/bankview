@@ -130,7 +130,7 @@ export default function TransactionsPage() {
   }
 
   return (
-    <div className="pb-32 pt-4 max-w-4xl mx-auto">
+    <div className="pb-32 pt-4 px-4 max-w-4xl mx-auto w-full">
       <div className="space-y-12 w-full min-w-0">
           {/* Search Header inside main column */}
           <div className="flex items-center gap-4 animate-fade-in-up w-full mb-8 z-[50] relative">
